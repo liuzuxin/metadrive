@@ -33,6 +33,11 @@ class ArgoverseMapManager(MapManager):
 
 
 class ArgoverseEnv(MetaDriveEnv):
+
+    def __init__(self, use_example_config=True, *args, **kwargs):
+        super(ArgoverseEnv, self).__init__(*args, **kwargs)
+        self.use_example_config = use_example_config
+    
     def _post_process_config(self, config):
         config = super(ArgoverseEnv, self)._post_process_config(config)
         config["vehicle_config"]["spawn_lane_index"] = argoverse_spawn_lane_index
