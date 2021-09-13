@@ -25,3 +25,5 @@
 **/top_down_view
 **/video
 **/real_data
+**/test_parsed
+*.pkl
