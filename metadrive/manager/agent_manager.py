@@ -3,9 +3,11 @@ from metadrive.constants import DEFAULT_AGENT
 from metadrive.policy.env_input_policy import EnvInputPolicy
 from metadrive.policy.idm_policy import ManualControllableIDMPolicy, IDMPolicy
 from metadrive.policy.manual_control_policy import ManualControlPolicy
+from metadrive.component.map.argoverse_map import ArgoverseMap
 from metadrive.policy.AI_protect_policy import AIProtectPolicy
 import logging
 from typing import Dict
+from numpy.linalg import norm
 
 from gym.spaces import Box, Dict, MultiDiscrete
 
@@ -67,6 +69,12 @@ class AgentManager(BaseManager):
             vehicle_type[self.engine.global_config["vehicle_config"]["vehicle_model"]]
         for agent_id, v_config in config_dict.items():
             obj = self.spawn_object(v_type, vehicle_config=v_config)
+            init_speed = ArgoverseMap.metadrive_position(v_config.get("init_speed", None))
+            if init_speed is not None:
+                # obj.set_velocity(init_speed, norm(init_speed))
+                # no landing from air
+                obj.set_position(obj.position)
+            obj.expert_takeover = True
             ret[agent_id] = obj
             policy = self._get_policy(obj)
             self.engine.add_policy(obj.id, policy)

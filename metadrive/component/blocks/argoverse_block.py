@@ -64,7 +64,7 @@ class ArgoverseBlock(BaseBlock):
             while left_id is not None and in_same_dir:
                 ret.insert(0, left_id)
                 left_id = self.argo_lanes[left_id].l_neighbor_id
-                in_same_dir = True if left_id is not None and lane.is_in_same_direction(
+                in_same_dir = True if left_id is not None and left_id in self.argo_lanes.keys() and lane.is_in_same_direction(
                     self.argo_lanes[left_id]
                 ) else False
 
@@ -76,7 +76,7 @@ class ArgoverseBlock(BaseBlock):
             while right_id is not None and in_same_dir:
                 ret.append(right_id)
                 right_id = self.argo_lanes[right_id].r_neighbor_id
-                in_same_dir = True if right_id is not None and lane.is_in_same_direction(
+                in_same_dir = True if right_id is not None and right_id in self.argo_lanes.keys() and lane.is_in_same_direction(
                     self.argo_lanes[right_id]
                 ) else False
             lanes = [self.argo_lanes[id] for id in ret]

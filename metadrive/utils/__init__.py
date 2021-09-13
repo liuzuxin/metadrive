@@ -5,3 +5,4 @@ from metadrive.utils.math_utils import safe_clip, clip, norm, distance_greater, 
 from metadrive.utils.random_utils import get_np_random, random_string
 from metadrive.utils.utils import is_mac, import_pygame, recursive_equal, setup_logger, merge_dicts, \
     concat_step_infos, is_win
+ARGOVERSE_AGENT_ID = "00000000-0000-0000-0000-000000000000"

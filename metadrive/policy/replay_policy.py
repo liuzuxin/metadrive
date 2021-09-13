@@ -28,6 +28,8 @@ class ReplayPolicy(BasePolicy):
             self.control_object.set_position(self.init_pos)
         elif str(self.timestep) in self.traj_info.keys():
             self.control_object.set_position(self.traj_info[str(self.timestep)])
+        else:
+            self.control_object.set_position([0, 0])
 
         if self.heading is None or str(self.timestep - 1) not in self.heading.keys():
             pass
