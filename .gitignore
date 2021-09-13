@@ -24,6 +24,3 @@
 /metadrive/cutils.cp37-win_amd64.pyd
 **/top_down_view
 **/video
-**/real_data
-**/test_parsed
-*.pkl
