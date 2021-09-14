@@ -33,6 +33,6 @@ if __name__ == "__main__":
         #     img.write("top_down_view/{}.png".format(log_id))
         #     break
         o, r, d, info = env.step([0., 0.])
-        # print(r, d)
+        print(r, d)
         print(i)
     env.close()

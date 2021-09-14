@@ -69,11 +69,7 @@ class AgentManager(BaseManager):
             vehicle_type[self.engine.global_config["vehicle_config"]["vehicle_model"]]
         for agent_id, v_config in config_dict.items():
             obj = self.spawn_object(v_type, vehicle_config=v_config)
-            init_speed = ArgoverseMap.metadrive_position(v_config.get("init_speed", None))
-            if init_speed is not None:
-                # obj.set_velocity(init_speed, norm(init_speed))
-                # no landing from air
-                obj.set_position(obj.position)
+            obj.set_position(obj.position)
             obj.expert_takeover = True
             ret[agent_id] = obj
             policy = self._get_policy(obj)
