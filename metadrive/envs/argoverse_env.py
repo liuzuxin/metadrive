@@ -144,6 +144,7 @@ class ArgoverseGeneralizationEnv(MetaDriveEnv):
         super(ArgoverseGeneralizationEnv, self).__init__(config)
         root_path = pathlib.PurePosixPath(__file__).parent.parent if not is_win() else pathlib.Path(__file__).resolve(
         ).parent.parent
+        root_path=pathlib.PurePosixPath("/home/xuezhenghai/metadrive/metadrive/")
         self.file_path = root_path.joinpath("assets").joinpath("real_data").joinpath("{}_parsed".format(self.mode))
         self.data_files = listdir(self.file_path)
         for data_file in self.data_files:
@@ -161,9 +162,9 @@ class ArgoverseGeneralizationEnv(MetaDriveEnv):
         """
         self.lazy_init()  # it only works the first time when reset() is called to avoid the error when render
         self._reset_global_seed(force_seed)
-        self._reset_real_config()
-        # self.engine.update_manager("map_manager", ArgoverseMapManager(self.argoverse_config["map_config"]))
         try:
+            self._reset_real_config()
+        # self.engine.update_manager("map_manager", ArgoverseMapManager(self.argoverse_config["map_config"]))
             self.engine.reset()
         except:
             return self.reset()
@@ -188,6 +189,7 @@ class ArgoverseGeneralizationEnv(MetaDriveEnv):
         current_data_file = self.data_files[self.current_seed]
         print(current_data_file)
         data_path = self.file_path.joinpath(current_data_file)
+        print(data_path)
         with open(data_path, 'rb') as f:
             loaded_config = pickle.load(f)
 
