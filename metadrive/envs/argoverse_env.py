@@ -159,13 +159,13 @@ class ArgoverseGeneralizationEnv(MetaDriveEnv):
         """
         self.lazy_init()  # it only works the first time when reset() is called to avoid the error when render
         self._reset_global_seed(force_seed)
-        try:
-            self._reset_real_config()
-        # self.engine.update_manager("map_manager", ArgoverseMapManager(self.argoverse_config["map_config"]))
-            self.engine.reset()
-        except:
-            logging.warning("error in reset. set new env")
-            return self.reset()
+        # try:
+            # self._reset_real_config()
+            # self.engine.reset()
+        # except:
+            # return self.reset()
+        self._reset_real_config()
+        self.engine.reset()
         if self._top_down_renderer is not None:
             self._top_down_renderer.reset(self.current_map)
 
