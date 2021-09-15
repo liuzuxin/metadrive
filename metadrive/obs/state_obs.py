@@ -62,13 +62,13 @@ class StateObservation(ObservationBase):
         """
         # update out of road
         info = []
-        if self.config["random_agent_model"]:
-
-            # The length of the target vehicle
-            info.append(clip(vehicle.LENGTH / vehicle.MAX_LENGTH, 0.0, 1.0))
-
-            # The width of the target vehicle
-            info.append(clip(vehicle.WIDTH / vehicle.MAX_WIDTH, 0.0, 1.0))
+        # if self.config["random_agent_model"]:
+        #
+        #     # The length of the target vehicle
+        #     info.append(clip(vehicle.LENGTH / vehicle.MAX_LENGTH, 0.0, 1.0))
+        #
+        #     # The width of the target vehicle
+        #     info.append(clip(vehicle.WIDTH / vehicle.MAX_WIDTH, 0.0, 1.0))
 
         if hasattr(vehicle, "side_detector") and vehicle.side_detector.available:
 
@@ -115,13 +115,21 @@ class StateObservation(ObservationBase):
             # then add the cloud points of lane line detector
             info += vehicle.lane_line_detector.perceive(vehicle, vehicle.engine.physics_world.static_world).cloud_points
 
-        else:
+        # else:
+        #
+        #     # If the lane line detector is turn off, then add the offset of current position
+        #     # against the central of current lane to the state. If vehicle is centered in the lane, then the offset
+        #     # is 0 and vice versa.
+        #     _, lateral = vehicle.lane.local_coordinates(vehicle.position)
+        #     info.append(clip((lateral * 2 / vehicle.navigation.map.MAX_LANE_WIDTH + 1.0) / 2.0, 0.0, 1.0))
 
-            # If the lane line detector is turn off, then add the offset of current position
-            # against the central of current lane to the state. If vehicle is centered in the lane, then the offset
-            # is 0 and vice versa.
-            _, lateral = vehicle.lane.local_coordinates(vehicle.position)
-            info.append(clip((lateral * 2 / vehicle.navigation.map.MAX_LANE_WIDTH + 1.0) / 2.0, 0.0, 1.0))
+        if self.config["random_agent_model"]:
+
+            # The length of the target vehicle
+            info.append(clip(vehicle.LENGTH / vehicle.MAX_LENGTH, 0.0, 1.0))
+
+            # The width of the target vehicle
+            info.append(clip(vehicle.WIDTH / vehicle.MAX_WIDTH, 0.0, 1.0))
 
         return info
 
