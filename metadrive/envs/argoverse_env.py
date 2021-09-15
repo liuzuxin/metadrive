@@ -24,7 +24,7 @@ argoverse_spawn_lane_index = ('7903', '9713', 0)
 argoverse_destination_node = "968"
 argoverse_log_id = "c6911883-1843-3727-8eaa-41dc8cda8993"
 
-
+logging.basicConfig(level=logging.DEBUG)
 class ArgoverseMapManager(MapManager):
 
     def __init__(self, *args, **kwargs):
@@ -122,14 +122,11 @@ class ArgoverseMultiEnv(MetaDriveEnv):
         ).parent.parent
         self.file_path = root_path.joinpath("assets").joinpath("real_data").joinpath("{}_parsed".format(self.mode))
         self.data_files = listdir(self.file_path)
-        print("Setting up {} environments...".format(self.env_num))
         self.envs = [ArgoverseEnv(data_file.split(".")[0]) for data_file in self.data_files[self.start_seed:self.start_seed+self.env_num]]
-        print("set up ok")
         self.start_seed = 0
 
     def reset(self, episode_data: dict = None, force_seed: Union[None, int] = None):
         self._reset_global_seed(force_seed)
-        print(self.current_seed)
         self.current_env = self.envs[self.current_seed]
         self.current_env.reset()
         
@@ -167,6 +164,7 @@ class ArgoverseGeneralizationEnv(MetaDriveEnv):
         # self.engine.update_manager("map_manager", ArgoverseMapManager(self.argoverse_config["map_config"]))
             self.engine.reset()
         except:
+            logging.warning("error in reset. set new env")
             return self.reset()
         if self._top_down_renderer is not None:
             self._top_down_renderer.reset(self.current_map)
@@ -222,12 +220,9 @@ class ArgoverseGeneralizationEnv(MetaDriveEnv):
         
 if __name__ == '__main__':
     # env = ArgoverseMultiEnv(dict(mode="train",environment_num=3, start_seed=15, use_render=False))
-    env = ArgoverseGeneralizationEnv(dict(mode="train",environment_num=3, start_seed=15, use_render=False))
+    env = ArgoverseGeneralizationEnv(dict(mode="train",environment_num=30, start_seed=15, use_render=False))
     while True:
-        t1 = time.time()
         env.reset()
-        print(time.time()-t1)
-        for i in range(1, 30):
+        for i in range(1, 10):
             o, r, d, info = env.step([1., 0.3])
-            print(i, r, d)
     env.close()
