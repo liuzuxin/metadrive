@@ -53,7 +53,8 @@ class StateObservation(ObservationBase):
         """
         navi_info = vehicle.navigation.get_navi_info()
         ego_state = self.vehicle_state(vehicle)
-        return np.concatenate([ego_state, navi_info])
+        ret = np.concatenate([ego_state, navi_info])
+        return ret.astype(np.float32)
 
     def vehicle_state(self, vehicle):
         """
@@ -61,13 +62,13 @@ class StateObservation(ObservationBase):
         """
         # update out of road
         info = []
-        if self.config["random_agent_model"]:
-
-            # The length of the target vehicle
-            info.append(clip(vehicle.LENGTH / vehicle.MAX_LENGTH, 0.0, 1.0))
-
-            # The width of the target vehicle
-            info.append(clip(vehicle.WIDTH / vehicle.MAX_WIDTH, 0.0, 1.0))
+        # if self.config["random_agent_model"]:
+        #
+        #     # The length of the target vehicle
+        #     info.append(clip(vehicle.LENGTH / vehicle.MAX_LENGTH, 0.0, 1.0))
+        #
+        #     # The width of the target vehicle
+        #     info.append(clip(vehicle.WIDTH / vehicle.MAX_WIDTH, 0.0, 1.0))
 
         if hasattr(vehicle, "side_detector") and vehicle.side_detector.available:
 
@@ -114,13 +115,21 @@ class StateObservation(ObservationBase):
             # then add the cloud points of lane line detector
             info += vehicle.lane_line_detector.perceive(vehicle, vehicle.engine.physics_world.static_world).cloud_points
 
-        else:
+        # else:
+        #
+        #     # If the lane line detector is turn off, then add the offset of current position
+        #     # against the central of current lane to the state. If vehicle is centered in the lane, then the offset
+        #     # is 0 and vice versa.
+        #     _, lateral = vehicle.lane.local_coordinates(vehicle.position)
+        #     info.append(clip((lateral * 2 / vehicle.navigation.map.MAX_LANE_WIDTH + 1.0) / 2.0, 0.0, 1.0))
 
-            # If the lane line detector is turn off, then add the offset of current position
-            # against the central of current lane to the state. If vehicle is centered in the lane, then the offset
-            # is 0 and vice versa.
-            _, lateral = vehicle.lane.local_coordinates(vehicle.position)
-            info.append(clip((lateral * 2 / vehicle.navigation.map.MAX_LANE_WIDTH + 1.0) / 2.0, 0.0, 1.0))
+        if self.config["random_agent_model"]:
+
+            # The length of the target vehicle
+            info.append(clip(vehicle.LENGTH / vehicle.MAX_LENGTH, 0.0, 1.0))
+
+            # The width of the target vehicle
+            info.append(clip(vehicle.WIDTH / vehicle.MAX_WIDTH, 0.0, 1.0))
 
         return info
 
@@ -167,7 +176,8 @@ class LidarStateObservation(ObservationBase):
         state = self.state_observe(vehicle)
         other_v_info = self.lidar_observe(vehicle)
         self.current_observation = np.concatenate((state, np.asarray(other_v_info)))
-        return self.current_observation
+        ret = self.current_observation
+        return ret.astype(np.float32)
 
     def state_observe(self, vehicle):
         return self.state_obs.observe(vehicle)
