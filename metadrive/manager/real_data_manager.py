@@ -84,8 +84,8 @@ class RealDataManager(BaseManager):
             start = np.max(l.centerline, axis=0)
             end = np.min(l.centerline, axis=0)
             for idx, pos in zip(pos_dict.keys(), pos_dict.values()):
-                v_type = self.random_vehicle_type(prob=[0.4, 0.3, 0.3, 0, 0])
                 if start[0] > pos[0] > end[0] and start[1] > pos[1] > end[1]:
+                    v_type = self.random_vehicle_type(prob=[0.4, 0.3, 0.3, 0, 0])
                     long, lat = l.local_coordinates(pos)
                     config = {
                         "id": idx,
@@ -115,8 +115,9 @@ class RealDataManager(BaseManager):
                     break
 
     def random_vehicle_type(self, prob=[0.2, 0.3, 0.3, 0.2, 0]):
-        from metadrive.component.vehicle.vehicle_type import random_vehicle_type
-        vehicle_type = random_vehicle_type(self.np_random, prob)
+        from metadrive.component.vehicle.vehicle_type import SVehicle
+        # vehicle_type = random_vehicle_type(self.np_random, prob)
+        vehicle_type = SVehicle
         return vehicle_type
 
     def destroy(self) -> None:
