@@ -68,7 +68,8 @@ METADRIVE_DEFAULT_CONFIG = dict(
         # laser num, distance, other vehicle info num
         lidar=dict(num_lasers=240, distance=50, num_others=0, gaussian_noise=0.0, dropout_prob=0.0),
         side_detector=dict(num_lasers=0, distance=50, gaussian_noise=0.0, dropout_prob=0.0),
-        lane_line_detector=dict(num_lasers=0, distance=20, gaussian_noise=0.0, dropout_prob=0.0),
+        lane_line_detector=dict(num_lasers=0, distance=20, gaussian_noise=0.0, dropout_prob=0.0, disable_lane_line_detection=False),
+        # lane_line_detector=dict(num_lasers=0, distance=20, gaussian_noise=0.0, dropout_prob=0.0),
         show_lidar=False,
         mini_map=(84, 84, 250),  # buffer length, width
         rgb_camera=(84, 84),  # buffer length, width
