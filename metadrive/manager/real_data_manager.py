@@ -115,9 +115,9 @@ class RealDataManager(BaseManager):
                     break
 
     def random_vehicle_type(self, prob=[0.2, 0.3, 0.3, 0.2, 0]):
-        from metadrive.component.vehicle.vehicle_type import SVehicle
+        from metadrive.component.vehicle.vehicle_type import ReplayVehicle
         # vehicle_type = random_vehicle_type(self.np_random, prob)
-        vehicle_type = SVehicle
+        vehicle_type = ReplayVehicle
         return vehicle_type
 
     def destroy(self) -> None:
