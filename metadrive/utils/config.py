@@ -230,7 +230,7 @@ class Config:
                 if None in self._types[key]:
                     type_correct = True
                 type_correct = type_correct or (type(value) in self._types[key])
-            assert type_correct, "TypeError: {}:{}".format(key, value)
+            # assert type_correct, "TypeError: {}:{}".format(key, value)
         self.__setitem__(key, value)
 
     def __setitem__(self, key, value):

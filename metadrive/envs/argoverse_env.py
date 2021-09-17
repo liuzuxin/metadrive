@@ -19,12 +19,12 @@ except ImportError:
 
 argoverse_city = "PIT"
 argoverse_map_center = [2599.5505965123866, 1200.0214763629717]
-argoverse_map_radius = 150
+argoverse_map_radius = 200
 argoverse_spawn_lane_index = ('7903', '9713', 0)
 argoverse_destination_node = "968"
 argoverse_log_id = "c6911883-1843-3727-8eaa-41dc8cda8993"
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 class ArgoverseMapManager(MapManager):
 
     def __init__(self, *args, **kwargs):
@@ -143,7 +143,7 @@ class ArgoverseGeneralizationEnv(MetaDriveEnv):
         ).parent.parent
         root_path=pathlib.PurePosixPath("/home/xuezhenghai/metadrive/metadrive/")
         self.file_path = root_path.joinpath("assets").joinpath("real_data").joinpath("{}_parsed".format(self.mode))
-        self.data_files = listdir(self.file_path)
+        self.data_files = sorted(listdir(self.file_path))
         for data_file in self.data_files:
             data_path = self.file_path.joinpath(data_file)
 
@@ -159,13 +159,13 @@ class ArgoverseGeneralizationEnv(MetaDriveEnv):
         """
         self.lazy_init()  # it only works the first time when reset() is called to avoid the error when render
         self._reset_global_seed(force_seed)
-        try:
-            self._reset_real_config()
-        # self.engine.update_manager("map_manager", ArgoverseMapManager(self.argoverse_config["map_config"]))
-            self.engine.reset()
-        except:
-            logging.warning("error in reset. set new env")
-            return self.reset()
+        # try:
+            # self._reset_real_config()
+            # self.engine.reset()
+        # except:
+            # return self.reset()
+        self._reset_real_config()
+        self.engine.reset()
         if self._top_down_renderer is not None:
             self._top_down_renderer.reset(self.current_map)
 
@@ -220,9 +220,17 @@ class ArgoverseGeneralizationEnv(MetaDriveEnv):
         
 if __name__ == '__main__':
     # env = ArgoverseMultiEnv(dict(mode="train",environment_num=3, start_seed=15, use_render=False))
-    env = ArgoverseGeneralizationEnv(dict(mode="train",environment_num=30, start_seed=15, use_render=False))
+    env = ArgoverseGeneralizationEnv(dict(mode="train",environment_num=30, start_seed=0, use_render=False))
     while True:
         env.reset()
-        for i in range(1, 10):
-            o, r, d, info = env.step([1., 0.3])
-    env.close()
+    for i in range(0, 65):
+        print(i)
+        try:
+            # env = ArgoverseGeneralizationEnv(dict(mode="test",environment_num=1, start_seed=i, use_render=False))
+            env = ArgoverseGeneralizationEnv(dict(mode="train",environment_num=30, start_seed=i, use_render=False))
+            env.reset()
+            for i in range(1, 10):
+                o, r, d, info = env.step([1., 0.3])
+        except (TypeError, AssertionError) as e:
+            print("Assertion Failed!")
+        env.close()
