@@ -84,9 +84,11 @@ class RealDataManager(BaseManager):
             start = np.max(l.centerline, axis=0)
             end = np.min(l.centerline, axis=0)
             for idx, pos in zip(pos_dict.keys(), pos_dict.values()):
-                if start[0] > pos[0] > end[0] and start[1] > pos[1] > end[1]:
+                # if start[0] > pos[0] > end[0] and start[1] > pos[1] > end[1]:
+                if l.index is not None:
                     v_type = self.random_vehicle_type(prob=[0.4, 0.3, 0.3, 0, 0])
                     long, lat = l.local_coordinates(pos)
+                    print(l.index)
                     config = {
                         "id": idx,
                         "type": v_type,
