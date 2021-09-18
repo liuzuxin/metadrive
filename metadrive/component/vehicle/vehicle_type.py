@@ -75,9 +75,11 @@ class SVehicle(BaseVehicle):
     MASS = 800
     path = ['vehicle/beetle/', (factor, factor, factor), (0, -0.2, 0.03), 0]
 
+
 class ReplayVehicle(SVehicle):
     def update_map_info(self, map):
         pass
+
     def update_dist_to_left_right(self):
         pass
 

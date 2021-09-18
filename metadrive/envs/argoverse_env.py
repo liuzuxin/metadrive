@@ -19,7 +19,7 @@ except ImportError:
 
 argoverse_city = "PIT"
 argoverse_map_center = [2599.5505965123866, 1200.0214763629717]
-argoverse_map_radius = 200
+argoverse_map_radius = 300
 argoverse_spawn_lane_index = ('7903', '9713', 0)
 argoverse_destination_node = "968"
 argoverse_log_id = "c6911883-1843-3727-8eaa-41dc8cda8993"
@@ -56,16 +56,16 @@ class ArgoverseEnv(MetaDriveEnv):
         if log_id:
             root_path = pathlib.PurePosixPath(__file__).parent.parent if not is_win() else pathlib.Path(__file__).resolve(
             ).parent.parent
-            data_path = root_path.joinpath("assets").joinpath("real_data").joinpath("train_parsed").joinpath("{}.pkl".format(log_id))
+            data_path = root_path.joinpath("assets").joinpath("real_data").joinpath("test_archived").joinpath("{}.pkl".format(log_id))
             with open(data_path, 'rb') as f:
                 loaded_config = pickle.load(f)
                 
+            self.map_config = {
+                "city": argoverse_city,
+                "center": argoverse_map_center,
+                "radius": argoverse_map_radius,
+            }
             self.argoverse_config = {
-                "map_config": {
-                    "city": loaded_config["city"],
-                    "center": loaded_config["map_center"],
-                    "radius": argoverse_map_radius,
-                },
                 "agent_pos": {
                     "spawn_lane_index": loaded_config["agent_spawn_lane_index"],
                     "destination_node": loaded_config["agent_targ_node"]
@@ -79,12 +79,12 @@ class ArgoverseEnv(MetaDriveEnv):
             data_path = root_path.joinpath("assets").joinpath("real_data").joinpath("{}.pkl".format(log_id))
             with open(data_path, 'rb') as f:
                 locate_info, _ = pickle.load(f)
+            self.map_config = {
+                "city": argoverse_city,
+                "center": argoverse_map_center,
+                "radius": argoverse_map_radius,
+            }
             self.argoverse_config = {
-                "map_config": {
-                    "city": argoverse_city,
-                    "center": argoverse_map_center,
-                    "radius": argoverse_map_radius,
-                },
                 "agent_pos": {
                     "spawn_lane_index": argoverse_spawn_lane_index,
                     "destination_node": argoverse_destination_node,
@@ -103,13 +103,14 @@ class ArgoverseEnv(MetaDriveEnv):
         config["vehicle_config"]["destination_node"] = self.argoverse_config["agent_pos"]["destination_node"]
         config.update({"real_data_config": {"locate_info": self.argoverse_config["locate_info"]}})
         config["traffic_density"] = 0.0  # Remove rule-based traffic flow
+        config["map_config"].update(self.map_config)
         return config
 
     def setup_engine(self):
         super(ArgoverseEnv, self).setup_engine()
         from metadrive.manager.real_data_manager import RealDataManager
         self.engine.register_manager("real_data_manager", RealDataManager())
-        self.engine.update_manager("map_manager", ArgoverseMapManager(self.argoverse_config["map_config"]))
+        self.engine.update_manager("map_manager", ArgoverseMapManager())
 
 class ArgoverseMultiEnv(MetaDriveEnv):
     
@@ -141,7 +142,6 @@ class ArgoverseGeneralizationEnv(MetaDriveEnv):
         super(ArgoverseGeneralizationEnv, self).__init__(config)
         root_path = pathlib.PurePosixPath(__file__).parent.parent if not is_win() else pathlib.Path(__file__).resolve(
         ).parent.parent
-        root_path=pathlib.PurePosixPath("/home/xuezhenghai/metadrive/metadrive/")
         self.file_path = root_path.joinpath("assets").joinpath("real_data").joinpath("{}_parsed".format(self.mode))
         self.data_files = sorted(listdir(self.file_path))
         for data_file in self.data_files:
@@ -220,16 +220,16 @@ class ArgoverseGeneralizationEnv(MetaDriveEnv):
         
 if __name__ == '__main__':
     # env = ArgoverseMultiEnv(dict(mode="train",environment_num=3, start_seed=15, use_render=False))
-    env = ArgoverseGeneralizationEnv(dict(mode="train",environment_num=30, start_seed=0, use_render=False))
+    env = ArgoverseGeneralizationEnv(dict(mode="test",environment_num=20, start_seed=0, use_render=False, manual_control=True, disable_model_compression=True))
     while True:
         env.reset()
+        [env.step([0., 0.]) for _ in range(100)]
     for i in range(0, 65):
         print(i)
         try:
-            # env = ArgoverseGeneralizationEnv(dict(mode="test",environment_num=1, start_seed=i, use_render=False))
-            env = ArgoverseGeneralizationEnv(dict(mode="train",environment_num=30, start_seed=i, use_render=False))
+            env = ArgoverseGeneralizationEnv(dict(mode="train",environment_num=1, start_seed=i, use_render=True))
             env.reset()
-            for i in range(1, 10):
+            for i in range(1, 20):
                 o, r, d, info = env.step([1., 0.3])
         except (TypeError, AssertionError) as e:
             print("Assertion Failed!")

@@ -1,7 +1,7 @@
 """
 This script demonstrates how to use the environment where traffic and road map are loaded from argoverse dataset.
 """
-from metadrive.envs.argoverse_env import ArgoverseEnv
+from metadrive.envs.argoverse_env import ArgoverseEnv, ArgoverseGeneralizationEnv
 from panda3d.core import PNMImage
 import logging
 import os
@@ -15,6 +15,7 @@ if __name__ == "__main__":
     print("We are preparing argoverse environment!")
     # env = ArgoverseEnv(None, {"manual_control": True, "use_render": True})
     log_id = args.log_id.split(".")[0]
+    # env = ArgoverseGeneralizationEnv(log_id, {"manual_control": True, "use_render": True})
     env = ArgoverseEnv(log_id, {"manual_control": True, "use_render": True})
     o = env.reset()
     for i in range(1, 300):
