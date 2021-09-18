@@ -70,7 +70,6 @@ class AgentManager(BaseManager):
         for agent_id, v_config in config_dict.items():
             obj = self.spawn_object(v_type, vehicle_config=v_config)
             obj.set_position(obj.position)
-            obj.expert_takeover = True
             ret[agent_id] = obj
             policy = self._get_policy(obj)
             self.engine.add_policy(obj.id, policy)
