@@ -188,6 +188,7 @@ class ArgoverseGeneralizationEnv(MetaDriveEnv):
         current_data_file = self.data_files[self.current_seed]
         current_data_file = "b1ca08f1-24b0-3c39-ba4e-d5a92868462c.pkl" # infinite loop in navigation point searching
         current_data_file = "70d2aea5-dbeb-333d-b21e-76a7f2f1ba1c.pkl" # delayed navigation point selection
+        current_data_file = "aeb73d7a-8257-3225-972e-99307b3a5cb0.pkl" # delayed navigation point selection
         current_id = current_data_file.split(".")[0]
         print(current_data_file)
         data_path = self.file_path.joinpath(current_data_file)
@@ -218,12 +219,13 @@ class ArgoverseGeneralizationEnv(MetaDriveEnv):
         self.argoverse_config = {
             "locate_info": loaded_config["locate_info"]
         }
+        agent_init_pos = self.argoverse_config["locate_info"][ARGOVERSE_AGENT_ID]["init_pos"]
         self.argoverse_config["locate_info"].pop(ARGOVERSE_AGENT_ID)
 
         config = self.engine.global_config
         config["vehicle_config"]["spawn_lane_index"] = agent_pos["spawn_lane_index"]
         config["vehicle_config"]["destination_node"] = agent_pos["destination_node"]
-        config["vehicle_config"].update({"enable_reverse": True})
+        config["vehicle_config"].update({"enable_reverse": True, "agent_init_pos": agent_init_pos})
         config.update({"real_data_config": {"locate_info": self.argoverse_config["locate_info"]}})
         config["traffic_density"] = 0.0  # Remove rule-based traffic flow
         config["map_config"].update(
@@ -245,6 +247,7 @@ if __name__ == '__main__':
             disable_model_compression=True))
     while True:
         env.reset()
+        env.vehicle.expert_takeover=True
         while True:
             env.step([0., 0.])
             info = {}
