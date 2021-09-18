@@ -56,13 +56,13 @@ class ArgoverseEnv(MetaDriveEnv):
         if log_id:
             root_path = pathlib.PurePosixPath(__file__).parent.parent if not is_win() else pathlib.Path(__file__).resolve(
             ).parent.parent
-            data_path = root_path.joinpath("assets").joinpath("real_data").joinpath("test_archived").joinpath("{}.pkl".format(log_id))
+            data_path = root_path.joinpath("assets").joinpath("real_data").joinpath("test_parsed").joinpath("{}.pkl".format(log_id))
             with open(data_path, 'rb') as f:
                 loaded_config = pickle.load(f)
                 
             self.map_config = {
-                "city": argoverse_city,
-                "center": argoverse_map_center,
+                "city": loaded_config["city"],
+                "center": loaded_config["map_center"],
                 "radius": argoverse_map_radius,
             }
             self.argoverse_config = {
@@ -143,6 +143,7 @@ class ArgoverseGeneralizationEnv(MetaDriveEnv):
         root_path = pathlib.PurePosixPath(__file__).parent.parent if not is_win() else pathlib.Path(__file__).resolve(
         ).parent.parent
         self.file_path = root_path.joinpath("assets").joinpath("real_data").joinpath("{}_parsed".format(self.mode))
+        self.agent_pos_path = root_path.joinpath("assets").joinpath("real_data").joinpath("agent_pos")
         self.data_files = sorted(listdir(self.file_path))
         for data_file in self.data_files:
             data_path = self.file_path.joinpath(data_file)
@@ -185,29 +186,42 @@ class ArgoverseGeneralizationEnv(MetaDriveEnv):
 
     def _reset_real_config(self):
         current_data_file = self.data_files[self.current_seed]
+        current_data_file = "70d2aea5-dbeb-333d-b21e-76a7f2f1ba1c.pkl"
+        current_id = current_data_file.split(".")[0]
         print(current_data_file)
         data_path = self.file_path.joinpath(current_data_file)
-        print(data_path)
+            
         with open(data_path, 'rb') as f:
             loaded_config = pickle.load(f)
-
         map_config = {
             "city": loaded_config["city"],
             "center": loaded_config["map_center"],
             "radius": argoverse_map_radius,
         }
-        self.argoverse_config = {
-            "agent_pos": {
+
+        if current_id in listdir(self.agent_pos_path):
+            with open(self.agent_pos_path.joinpath(current_id), 'r') as f:
+                spawn_lane_index = eval(f.readline())
+                targ_lane_index = eval(f.readline())
+            print(spawn_lane_index, targ_lane_index)
+            agent_pos = {
+                "spawn_lane_index": spawn_lane_index,
+                "destination_node": targ_lane_index[0]
+            }
+        else:
+            agent_pos = {
                 "spawn_lane_index": loaded_config["agent_spawn_lane_index"],
                 "destination_node": loaded_config["agent_targ_node"]
             },
+
+        self.argoverse_config = {
             "locate_info": loaded_config["locate_info"]
         }
         self.argoverse_config["locate_info"].pop(ARGOVERSE_AGENT_ID)
 
         config = self.engine.global_config
-        config["vehicle_config"]["spawn_lane_index"] = self.argoverse_config["agent_pos"]["spawn_lane_index"]
-        config["vehicle_config"]["destination_node"] = self.argoverse_config["agent_pos"]["destination_node"]
+        config["vehicle_config"]["spawn_lane_index"] = agent_pos["spawn_lane_index"]
+        config["vehicle_config"]["destination_node"] = agent_pos["destination_node"]
         config.update({"real_data_config": {"locate_info": self.argoverse_config["locate_info"]}})
         config["traffic_density"] = 0.0  # Remove rule-based traffic flow
         config["map_config"].update(
@@ -220,10 +234,16 @@ class ArgoverseGeneralizationEnv(MetaDriveEnv):
         
 if __name__ == '__main__':
     # env = ArgoverseMultiEnv(dict(mode="train",environment_num=3, start_seed=15, use_render=False))
-    env = ArgoverseGeneralizationEnv(dict(mode="test",environment_num=20, start_seed=0, use_render=False, manual_control=True, disable_model_compression=True))
+    env = ArgoverseGeneralizationEnv(dict(
+            mode="test",
+            environment_num=20, 
+            start_seed=0,
+            use_render=True,
+            manual_control=True,
+            disable_model_compression=True))
     while True:
         env.reset()
-        [env.step([0., 0.]) for _ in range(100)]
+        [env.step([0., 0.]) for _ in range(10000)]
     for i in range(0, 65):
         print(i)
         try:
