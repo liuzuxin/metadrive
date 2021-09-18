@@ -16,9 +16,9 @@ if __name__ == "__main__":
     # env = ArgoverseEnv(None, {"manual_control": True, "use_render": True})
     log_id = args.log_id.split(".")[0]
     # env = ArgoverseGeneralizationEnv(log_id, {"manual_control": True, "use_render": True})
-    env = ArgoverseEnv(log_id, {"manual_control": True, "use_render": True})
+    env = ArgoverseEnv(log_id, {"manual_control": True, "use_render": True, })
     o = env.reset()
-    for i in range(1, 300):
+    while True:
         # if not os.path.exists("video/{}".format(log_id)):
         #     os.mkdir("video/{}".format(log_id))
         # img = PNMImage()
@@ -34,6 +34,9 @@ if __name__ == "__main__":
         #     img.write("top_down_view/{}.png".format(log_id))
         #     break
         o, r, d, info = env.step([0., 0.])
+        info = {}
+        info["lane_index"] = env.vehicle.lane_index
+        env.render(text=info)
         print(r, d)
-        print(i)
+        print(info)
     env.close()
