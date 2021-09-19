@@ -10,6 +10,7 @@ DEFAULT_AGENT = "default_agent"
 RENDER_MODE_NONE = "none"  # Do not render
 RENDER_MODE_ONSCREEN = "onscreen"  # Pop up a window and draw image in it
 RENDER_MODE_OFFSCREEN = "offscreen"  # Draw image in buffer and collect image from memory
+ARGOVERSE_AGENT_ID = "00000000-0000-0000-0000-000000000000"
 
 
 class TerminationState:
