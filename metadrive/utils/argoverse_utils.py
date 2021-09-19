@@ -239,6 +239,7 @@ def parse_forcasting_data(data_path):
         else:
             locate_info.pop(key)
 
+    map.destroy()
     
     return {
         "locate_info": locate_info, 
