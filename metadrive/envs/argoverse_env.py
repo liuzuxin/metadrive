@@ -160,11 +160,6 @@ class ArgoverseGeneralizationEnv(MetaDriveEnv):
         """
         self.lazy_init()  # it only works the first time when reset() is called to avoid the error when render
         self._reset_global_seed(force_seed)
-        # try:
-            # self._reset_real_config()
-            # self.engine.reset()
-        # except:
-            # return self.reset()
         self._reset_real_config()
         self.engine.reset()
         if self._top_down_renderer is not None:
@@ -188,7 +183,6 @@ class ArgoverseGeneralizationEnv(MetaDriveEnv):
         current_data_file = self.data_files[self.current_seed]
         # current_data_file = "b1ca08f1-24b0-3c39-ba4e-d5a92868462c.pkl" # infinite loop in navigation point searching
         # current_data_file = "70d2aea5-dbeb-333d-b21e-76a7f2f1ba1c.pkl" # delayed navigation point selection
-        # current_data_file = "aeb73d7a-8257-3225-972e-99307b3a5cb0.pkl" # delayed navigation point selection
         current_id = current_data_file.split(".")[0]
         print("map file: ", current_data_file)
         data_path = self.file_path.joinpath(current_data_file)
@@ -210,12 +204,10 @@ class ArgoverseGeneralizationEnv(MetaDriveEnv):
                 "destination_node": targ_lane_index[0]
             }
         else:
-            print(1)
             agent_pos = {
                 "spawn_lane_index": loaded_config["agent_spawn_lane_index"],
                 "destination_node": loaded_config["agent_targ_node"]
             }
-        # print(loaded_config["agent_targ_node"])
 
         self.argoverse_config = {
             "locate_info": loaded_config["locate_info"]
@@ -226,7 +218,7 @@ class ArgoverseGeneralizationEnv(MetaDriveEnv):
         config = self.engine.global_config
         config["vehicle_config"]["spawn_lane_index"] = agent_pos["spawn_lane_index"]
         config["vehicle_config"]["destination_node"] = agent_pos["destination_node"]
-        config["vehicle_config"].update({"enable_reverse": True, "agent_init_pos": agent_init_pos})
+        config["vehicle_config"].update({"agent_init_pos": agent_init_pos})
         config.update({"real_data_config": {"locate_info": self.argoverse_config["locate_info"]}})
         config["traffic_density"] = 0.0  # Remove rule-based traffic flow
         config["map_config"].update(
@@ -246,16 +238,16 @@ if __name__ == '__main__':
             use_render=True,
             manual_control=True,
             disable_model_compression=True))
-    # while True:
-    #     env.reset()
-    #     env.vehicle.expert_takeover=True
-    #     while True:
-    #         env.step([0., 0.])
-    #         info = {}
-    #         info["lane_index"] = env.vehicle.lane_index
-    #         env.render(text=info)
-    #         print(info)
-    for i in range(0, 65):
+    while True:
+        env.reset()
+        env.vehicle.expert_takeover=True
+        for _ in range(200):
+            env.step([0., 0.])
+            info = {}
+            info["lane_index"] = env.vehicle.lane_index
+            env.render(text=info)
+            print(info)
+    for i in range(10, 65):
         print(i)
         try:
             env = ArgoverseGeneralizationEnv(dict(mode="test",environment_num=1, start_seed=i, use_render=True, manual_control=True))

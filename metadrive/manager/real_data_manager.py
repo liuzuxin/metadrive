@@ -85,22 +85,21 @@ class RealDataManager(BaseManager):
             end = np.min(l.centerline, axis=0)
             for idx, pos in zip(pos_dict.keys(), pos_dict.values()):
                 # if start[0] > pos[0] > end[0] and start[1] > pos[1] > end[1]:
-                if l.index is not None:
-                    v_type = self.random_vehicle_type(prob=[0.4, 0.3, 0.3, 0, 0])
-                    long, lat = l.local_coordinates(pos)
-                    print(l.index)
-                    config = {
-                        "id": idx,
-                        "type": v_type,
-                        "v_config": {
-                            "spawn_lane_index": l.index,
-                            "spawn_longitude": long,
-                            "enable_reverse": False,
-                        }
+                # if l.index is not None:
+                v_type = self.random_vehicle_type(prob=[0.4, 0.3, 0.3, 0, 0])
+                long, lat = l.local_coordinates(pos)
+                config = {
+                    "id": idx,
+                    "type": v_type,
+                    "v_config": {
+                        "spawn_lane_index": (l.start_node, l.end_node, 0),
+                        "spawn_longitude": 0,
+                        "enable_reverse": False,
                     }
-                    potential_vehicle_configs.append(config)
-                    pos_dict.pop(idx, None)
-                    break
+                }
+                potential_vehicle_configs.append(config)
+                pos_dict.pop(idx, None)
+                break
         from metadrive.policy.replay_policy import ReplayPolicy
         for road in roads:
             for config in potential_vehicle_configs:
