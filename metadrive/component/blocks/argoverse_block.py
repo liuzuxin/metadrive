@@ -115,7 +115,7 @@ class ArgoverseBlock(BaseBlock):
                 left_lat = 0
             width = max(abs(right_lat), abs(left_lat)) + 0.1
             lane.width = width if abs(width) > 1.0 else lane.LANE_WIDTH  # else default
-            self.block_network.add_road(Road(lane.start_node, lane.end_node), lanes)
+            self.block_network.add_road(Road(lane.start_node, lane.end_node), copy.deepcopy(lanes))
 
     # def propagate_width(self, current_lanes):
     #     for current_lane in current_lanes:
