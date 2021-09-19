@@ -5,6 +5,7 @@ from metadrive.component.lane.abs_lane import LineColor, LineType
 from metadrive.component.lane.argoverse_lane import ArgoverseLane
 from metadrive.component.road.road import Road
 from metadrive.component.road.road_network import RoadNetwork
+import copy
 
 
 class ArgoverseBlock(BaseBlock):
