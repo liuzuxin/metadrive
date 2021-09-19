@@ -186,11 +186,11 @@ class ArgoverseGeneralizationEnv(MetaDriveEnv):
 
     def _reset_real_config(self):
         current_data_file = self.data_files[self.current_seed]
-        current_data_file = "b1ca08f1-24b0-3c39-ba4e-d5a92868462c.pkl" # infinite loop in navigation point searching
-        current_data_file = "70d2aea5-dbeb-333d-b21e-76a7f2f1ba1c.pkl" # delayed navigation point selection
-        current_data_file = "aeb73d7a-8257-3225-972e-99307b3a5cb0.pkl" # delayed navigation point selection
+        # current_data_file = "b1ca08f1-24b0-3c39-ba4e-d5a92868462c.pkl" # infinite loop in navigation point searching
+        # current_data_file = "70d2aea5-dbeb-333d-b21e-76a7f2f1ba1c.pkl" # delayed navigation point selection
+        # current_data_file = "aeb73d7a-8257-3225-972e-99307b3a5cb0.pkl" # delayed navigation point selection
         current_id = current_data_file.split(".")[0]
-        print(current_data_file)
+        print("map file: ", current_data_file)
         data_path = self.file_path.joinpath(current_data_file)
             
         with open(data_path, 'rb') as f:
@@ -205,7 +205,6 @@ class ArgoverseGeneralizationEnv(MetaDriveEnv):
             with open(self.agent_pos_path.joinpath(current_id), 'r') as f:
                 spawn_lane_index = eval(f.readline())
                 targ_lane_index = eval(f.readline())
-            print(spawn_lane_index, targ_lane_index)
             agent_pos = {
                 "spawn_lane_index": spawn_lane_index,
                 "destination_node": targ_lane_index[0]
@@ -238,29 +237,30 @@ class ArgoverseGeneralizationEnv(MetaDriveEnv):
         
 if __name__ == '__main__':
     # env = ArgoverseMultiEnv(dict(mode="train",environment_num=3, start_seed=15, use_render=False))
-    env = ArgoverseGeneralizationEnv(dict(
-            mode="test",
-            environment_num=20, 
-            start_seed=0,
-            use_render=True,
-            manual_control=True,
-            disable_model_compression=True))
-    while True:
-        env.reset()
-        env.vehicle.expert_takeover=True
-        while True:
-            env.step([0., 0.])
-            info = {}
-            info["lane_index"] = env.vehicle.lane_index
-            env.render(text=info)
-            print(info)
+    # env = ArgoverseGeneralizationEnv(dict(
+            # mode="test",
+            # environment_num=20, 
+            # start_seed=0,
+            # use_render=True,
+            # manual_control=True,
+            # disable_model_compression=True))
+    # while True:
+        # env.reset()
+        # env.vehicle.expert_takeover=True
+        # while True:
+            # env.step([0., 0.])
+            # info = {}
+            # info["lane_index"] = env.vehicle.lane_index
+            # env.render(text=info)
+            # print(info)
     for i in range(0, 65):
         print(i)
         try:
-            env = ArgoverseGeneralizationEnv(dict(mode="train",environment_num=1, start_seed=i, use_render=True))
+            env = ArgoverseGeneralizationEnv(dict(mode="test",environment_num=1, start_seed=i, use_render=False))
             env.reset()
             for i in range(1, 20):
                 o, r, d, info = env.step([1., 0.3])
         except (TypeError, AssertionError) as e:
             print("Assertion Failed!")
+            raise e
         env.close()
