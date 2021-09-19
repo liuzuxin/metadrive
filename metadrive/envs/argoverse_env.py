@@ -210,10 +210,12 @@ class ArgoverseGeneralizationEnv(MetaDriveEnv):
                 "destination_node": targ_lane_index[0]
             }
         else:
+            print(1)
             agent_pos = {
                 "spawn_lane_index": loaded_config["agent_spawn_lane_index"],
                 "destination_node": loaded_config["agent_targ_node"]
             }
+        # print(loaded_config["agent_targ_node"])
 
         self.argoverse_config = {
             "locate_info": loaded_config["locate_info"]
@@ -237,29 +239,30 @@ class ArgoverseGeneralizationEnv(MetaDriveEnv):
         
 if __name__ == '__main__':
     # env = ArgoverseMultiEnv(dict(mode="train",environment_num=3, start_seed=15, use_render=False))
-    # env = ArgoverseGeneralizationEnv(dict(
-            # mode="test",
-            # environment_num=20, 
-            # start_seed=0,
-            # use_render=True,
-            # manual_control=True,
-            # disable_model_compression=True))
+    env = ArgoverseGeneralizationEnv(dict(
+            mode="test",
+            environment_num=20, 
+            start_seed=0,
+            use_render=True,
+            manual_control=True,
+            disable_model_compression=True))
     # while True:
-        # env.reset()
-        # env.vehicle.expert_takeover=True
-        # while True:
-            # env.step([0., 0.])
-            # info = {}
-            # info["lane_index"] = env.vehicle.lane_index
-            # env.render(text=info)
-            # print(info)
+    #     env.reset()
+    #     env.vehicle.expert_takeover=True
+    #     while True:
+    #         env.step([0., 0.])
+    #         info = {}
+    #         info["lane_index"] = env.vehicle.lane_index
+    #         env.render(text=info)
+    #         print(info)
     for i in range(0, 65):
         print(i)
         try:
-            env = ArgoverseGeneralizationEnv(dict(mode="test",environment_num=1, start_seed=i, use_render=False))
+            env = ArgoverseGeneralizationEnv(dict(mode="test",environment_num=1, start_seed=i, use_render=True, manual_control=True))
             env.reset()
-            for i in range(1, 20):
-                o, r, d, info = env.step([1., 0.3])
+            env.vehicle.expert_takeover=True
+            for i in range(1, 200):
+                o, r, d, info = env.step([0., 0.0])
         except (TypeError, AssertionError) as e:
             print("Assertion Failed!")
             raise e
