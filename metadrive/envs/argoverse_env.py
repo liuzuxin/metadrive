@@ -269,7 +269,7 @@ if __name__ == '__main__':
     # env = ArgoverseMultiEnv(dict(mode="train",environment_num=3, start_seed=15, use_render=False))
     env = ArgoverseGeneralizationEnv(dict(
             mode="train",
-            source="tracking",
+            source="forecasting",
             environment_num=20,
             start_seed=10,
             use_render=True,
