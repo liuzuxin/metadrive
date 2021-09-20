@@ -193,7 +193,6 @@ class ArgoverseGeneralizationEnv(MetaDriveEnv):
 
     def _reset_real_config_forecasting(self):
         current_data_file = self.data_files[self.current_seed]
-        current_data_file = "109411.pkl"
         print("map file: ", current_data_file)
         data_path = self.file_path.joinpath(current_data_file)
         with open(data_path, 'rb') as f:
@@ -278,7 +277,7 @@ if __name__ == '__main__':
             source="forecasting",
             environment_num=20,
             start_seed=10,
-            use_render=True,
+            use_render=False,
             manual_control=True,
             disable_model_compression=True
         )
@@ -286,12 +285,12 @@ if __name__ == '__main__':
     while True:
         env.reset()
         env.vehicle.expert_takeover = True
-        for _ in range(200):
+        for _ in range(2):
             env.step([0., 0.])
             info = {}
             info["lane_index"] = env.vehicle.lane_index
-            env.render(text=info)
-            print(info)
+            # env.render(text=info)
+            # print(info)
     for i in range(0, 15):
         print(i)
         try:

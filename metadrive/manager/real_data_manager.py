@@ -78,15 +78,18 @@ class RealDataManager(BaseManager):
     def _create_from_forecasting(self, locate_info):
         for key in locate_info.keys():
             this_info = locate_info[key]
-            generated_v = self.spawn_object(
-                SVehicle,
-                vehicle_config={
-                    "spawn_lane_index": this_info["spawn_lane_index"],
-                    # "spawn_longitude": this_info["long"],
-                    # "spawn_lateral": this_info["lat"],
-                    "destination_node": this_info["targ_node"],
-                }
-            )
+            try:
+                generated_v = self.spawn_object(
+                    SVehicle,
+                    vehicle_config={
+                        "spawn_lane_index": this_info["spawn_lane_index"],
+                        # "spawn_longitude": this_info["long"],
+                        # "spawn_lateral": this_info["lat"],
+                        "destination_node": this_info["targ_node"],
+                    }
+                )
+            except (KeyError, IndexError) as e:
+                continue
             generated_v.set_static(True)
             self.engine.add_policy(generated_v.id, IDMPolicy(generated_v, self.generate_seed()))
             self._traffic_vehicles.append(generated_v)
