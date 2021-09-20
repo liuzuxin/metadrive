@@ -137,16 +137,17 @@ class ArgoverseMultiEnv(MetaDriveEnv):
 class ArgoverseGeneralizationEnv(MetaDriveEnv):
 
     def __init__(self, config: dict = None):
-        self.mode = config.pop("mode")
+        self.mode = config.pop("mode", "train")
+        self.source = config.pop("source", "tracking")
         # check parsed training and testing data
         super(ArgoverseGeneralizationEnv, self).__init__(config)
         root_path = pathlib.PurePosixPath(__file__).parent.parent if not is_win() else pathlib.Path(__file__).resolve(
         ).parent.parent
-        self.file_path = root_path.joinpath("assets").joinpath("real_data").joinpath("{}_parsed".format(self.mode))
+        self.file_path = root_path.joinpath("assets").joinpath("real_data").joinpath("{}_parsed".format(self.mode)) if \
+            self.source == 'tracking' else \
+            root_path.joinpath("assets").joinpath("real_data").joinpath("{}_forecasting".format(self.mode))
         self.agent_pos_path = root_path.joinpath("assets").joinpath("real_data").joinpath("agent_pos")
         self.data_files = sorted(listdir(self.file_path))
-        for data_file in self.data_files:
-            data_path = self.file_path.joinpath(data_file)
 
 
     def reset(self, episode_data: dict = None, force_seed: Union[None, int] = None):
@@ -160,7 +161,12 @@ class ArgoverseGeneralizationEnv(MetaDriveEnv):
         """
         self.lazy_init()  # it only works the first time when reset() is called to avoid the error when render
         self._reset_global_seed(force_seed)
-        self._reset_real_config()
+        if self.source == 'tracking':
+            self._reset_real_config()
+        elif self.source == 'forecasting':
+            self._reset_real_config_forecasting()
+        else:
+            assert False
         self.engine.reset()
         if self._top_down_renderer is not None:
             self._top_down_renderer.reset(self.current_map)
@@ -179,10 +185,40 @@ class ArgoverseGeneralizationEnv(MetaDriveEnv):
         self.engine.register_manager("real_data_manager", RealDataManager())
         self.engine.update_manager("map_manager", ArgoverseMapManager())
 
+    def _reset_real_config_forecasting(self):
+        current_data_file = self.data_files[self.current_seed]
+        print("map file: ", current_data_file)
+        data_path = self.file_path.joinpath(current_data_file)
+        with open(data_path, 'rb') as f:
+            loaded_config = pickle.load(f)
+            
+        locate_info = loaded_config["locate_info"]
+        if ARGOVERSE_AGENT_ID not in locate_info.keys():
+            agent_id = list(locate_info.keys())[0]
+        else:
+            agent_id = ARGOVERSE_AGENT_ID
+            
+        config = self.engine.global_config
+        config["vehicle_config"]["spawn_lane_index"] = locate_info[agent_id]["spawn_lane_index"]
+        config["vehicle_config"]["destination_node"] = locate_info[agent_id]["targ_node"]
+        config["vehicle_config"].update({"agent_init_pos": locate_info[agent_id]["init_pos"]})
+        locate_info.pop(agent_id)
+
+        config.update({"real_data_config": {"locate_info": locate_info, "source": "forecasting"}})
+        config["traffic_density"] = 0.0  # Remove rule-based traffic flow
+        config["map_config"].update(
+            {
+                "city": loaded_config["city"],
+                "center": ArgoverseMap.metadrive_position([loaded_config["map_center"][0], -loaded_config["map_center"][1]]),
+                "radius": 50
+            }
+        )
+
     def _reset_real_config(self):
         current_data_file = self.data_files[self.current_seed]
         # current_data_file = "b1ca08f1-24b0-3c39-ba4e-d5a92868462c.pkl" # infinite loop in navigation point searching
         # current_data_file = "70d2aea5-dbeb-333d-b21e-76a7f2f1ba1c.pkl" # delayed navigation point selection
+        current_data_file = "aeb73d7a-8257-3225-972e-99307b3a5cb0.pkl"
         current_id = current_data_file.split(".")[0]
         print("map file: ", current_data_file)
         data_path = self.file_path.joinpath(current_data_file)
@@ -219,7 +255,7 @@ class ArgoverseGeneralizationEnv(MetaDriveEnv):
         config["vehicle_config"]["spawn_lane_index"] = agent_pos["spawn_lane_index"]
         config["vehicle_config"]["destination_node"] = agent_pos["destination_node"]
         config["vehicle_config"].update({"agent_init_pos": agent_init_pos})
-        config.update({"real_data_config": {"locate_info": self.argoverse_config["locate_info"]}})
+        config.update({"real_data_config": {"locate_info": self.argoverse_config["locate_info"], "source": "tracking"}})
         config["traffic_density"] = 0.0  # Remove rule-based traffic flow
         config["map_config"].update(
             {
@@ -232,9 +268,10 @@ class ArgoverseGeneralizationEnv(MetaDriveEnv):
 if __name__ == '__main__':
     # env = ArgoverseMultiEnv(dict(mode="train",environment_num=3, start_seed=15, use_render=False))
     env = ArgoverseGeneralizationEnv(dict(
-            mode="test",
-            environment_num=20, 
-            start_seed=0,
+            mode="train",
+            source="tracking",
+            environment_num=20,
+            start_seed=10,
             use_render=True,
             manual_control=True,
             disable_model_compression=True))
@@ -247,13 +284,13 @@ if __name__ == '__main__':
             info["lane_index"] = env.vehicle.lane_index
             env.render(text=info)
             print(info)
-    for i in range(10, 65):
+    for i in range(0, 15):
         print(i)
         try:
-            env = ArgoverseGeneralizationEnv(dict(mode="test",environment_num=1, start_seed=i, use_render=True, manual_control=True))
+            env = ArgoverseGeneralizationEnv(dict(mode="test", environment_num=1, start_seed=i, use_render=False, manual_control=True))
             env.reset()
             env.vehicle.expert_takeover=True
-            for i in range(1, 200):
+            for i in range(1, 20):
                 o, r, d, info = env.step([0., 0.0])
         except (TypeError, AssertionError) as e:
             print("Assertion Failed!")

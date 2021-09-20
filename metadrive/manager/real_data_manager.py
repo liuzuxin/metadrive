@@ -6,6 +6,9 @@ import numpy as np
 from metadrive.component.map.base_map import BaseMap
 from metadrive.component.vehicle.vehicle_type import *
 from metadrive.manager.base_manager import BaseManager
+from metadrive.component.vehicle.vehicle_type import ReplayVehicle, SVehicle
+from metadrive.policy.replay_policy import ReplayPolicy
+from metadrive.policy.idm_policy import IDMPolicy
 
 BlockVehicles = namedtuple("block_vehicles", "trigger_road vehicles")
 
@@ -66,12 +69,42 @@ class RealDataManager(BaseManager):
         """
         real_data_config = self.engine.global_config["real_data_config"]
         locate_info = real_data_config["locate_info"]
+        source = real_data_config["source"]
+        if source == 'tracking':
+            self._create_from_tracking(locate_info, map)
+        else:
+            self._create_from_forecasting(locate_info)
+    def _create_from_forecasting(self, locate_info):
+        for key in locate_info.keys():
+            this_info = locate_info[key]
+            generated_v = self.spawn_object(SVehicle, vehicle_config={
+                "spawn_lane_index": this_info["spawn_lane_index"],
+                "spawn_longitude": 0,
+                "destination_node": this_info["targ_node"],
+            })
+            generated_v.set_static(True)
+            self.engine.add_policy(generated_v.id, IDMPolicy(generated_v, self.generate_seed()))
+            self._traffic_vehicles.append(generated_v)
+
+    def _filter_vehicle_configs(self, locate_info, max_to_keep=10):
+        locate_info = dict(sorted(locate_info.items(), 
+                                  key=lambda x:np.linalg.norm(x[1]["init_pos"] - list(x[1]["traj"].values())[-1]), 
+                                  reverse=True))
+        key_to_pop = []
+        for i, key in enumerate(locate_info.keys()):
+            if i >= max_to_keep:
+                key_to_pop.append(key)
+        for config in self.potential_vehicle_configs:
+            if config["id"] in key_to_pop:
+                config["id"] = None
+        
+    def _create_from_tracking(self, locate_info, map):
         pos_dict = {i: j["init_pos"] for i, j in zip(locate_info.keys(), locate_info.values())}
 
         block = map.blocks[0]
         lanes = block.argo_lanes.values()
         roads = block.block_network.get_roads(direction='positive', lane_num=1)
-        potential_vehicle_configs = []
+        self.potential_vehicle_configs = []
         for l in lanes:
             start = np.max(l.centerline, axis=0)
             end = np.min(l.centerline, axis=0)
@@ -89,26 +122,20 @@ class RealDataManager(BaseManager):
                         "enable_reverse": False,
                     }
                 }
-                potential_vehicle_configs.append(config)
+                self.potential_vehicle_configs.append(config)
                 pos_dict.pop(idx, None)
                 break
-        from metadrive.policy.replay_policy import ReplayPolicy
-        for road in roads:
-            for config in potential_vehicle_configs:
+        self._filter_vehicle_configs(locate_info, max_to_keep=10)
+        for config in self.potential_vehicle_configs:
+            if config["id"] is not None:
                 v_config = config["v_config"]
-                v_start = v_config["spawn_lane_index"][0]
-                v_end = v_config["spawn_lane_index"][1]
                 v_config.update(self.engine.global_config["traffic_vehicle_config"])
-                if road.start_node == v_start and road.end_node == v_end:
-                    generated_v = self.spawn_object(config["type"], vehicle_config=v_config)
-                    generated_v.set_static(True)
-                    self.engine.add_policy(generated_v.id, ReplayPolicy(generated_v, locate_info[config["id"]]))
-                    self._traffic_vehicles.append(generated_v)
-                    potential_vehicle_configs.remove(config)
-                    break
+                generated_v = self.spawn_object(config["type"], vehicle_config=v_config)
+                generated_v.set_static(True)
+                self.engine.add_policy(generated_v.id, ReplayPolicy(generated_v, locate_info[config["id"]]))
+                self._traffic_vehicles.append(generated_v)
 
     def random_vehicle_type(self, prob=[0.2, 0.3, 0.3, 0.2, 0]):
-        from metadrive.component.vehicle.vehicle_type import ReplayVehicle
         # vehicle_type = random_vehicle_type(self.np_random, prob)
         vehicle_type = ReplayVehicle
         return vehicle_type
