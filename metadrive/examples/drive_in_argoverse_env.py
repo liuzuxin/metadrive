@@ -16,7 +16,10 @@ if __name__ == "__main__":
     # env = ArgoverseEnv(None, {"manual_control": True, "use_render": True})
     log_id = args.log_id.split(".")[0]
     # env = ArgoverseGeneralizationEnv(log_id, {"manual_control": True, "use_render": True})
-    env = ArgoverseEnv(log_id, {"manual_control": True, "use_render": True, })
+    env = ArgoverseEnv(log_id, {
+        "manual_control": True,
+        "use_render": True,
+    })
     o = env.reset()
     while True:
         # if not os.path.exists("video/{}".format(log_id)):

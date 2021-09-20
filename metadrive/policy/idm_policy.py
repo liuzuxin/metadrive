@@ -88,6 +88,8 @@ class FrontBackObjects:
         if ref_lanes is not None:
             assert lane in ref_lanes
         idx = lane.index[-1]
+
+        # We only search three lanes.
         left_lane = ref_lanes[idx - 1] if idx > 0 and ref_lanes is not None else None
         right_lane = ref_lanes[idx + 1] if ref_lanes and idx + 1 < len(ref_lanes) is not None else None
         lanes = [left_lane, lane, right_lane]
@@ -104,12 +106,15 @@ class FrontBackObjects:
         current_long = [lane.local_coordinates(position)[0] if lane is not None else None for lane in lanes]
         left_long = [lane.length - current_long[idx] if lane is not None else None for idx, lane in enumerate(lanes)]
 
-        for i, lane in enumerate(lanes):
-            if lane is None:
+        for i, cur_lane in enumerate(lanes):
+            # lane is current searching lane.
+            if cur_lane is None:
                 continue
             for obj in objs:
-                if obj.lane is lane:
-                    long = lane.local_coordinates(obj.position)[0] - current_long[i]
+
+                if obj.lane is cur_lane:
+                    # If this object is in the same lane of current searching lane
+                    long = cur_lane.local_coordinates(obj.position)[0] - current_long[i]
                     if min_front_long[i] > long > 0:
                         min_front_long[i] = long
                         front_ret[i] = obj
@@ -119,12 +124,12 @@ class FrontBackObjects:
                         back_ret[i] = obj
                         find_back_in_current_lane[i] = True
 
-                elif not find_front_in_current_lane[i] and lane.is_previous_lane_of(obj.lane):
+                elif not find_front_in_current_lane[i] and cur_lane.is_previous_lane_of(obj.lane):
                     long = obj.lane.local_coordinates(obj.position)[0] + left_long[i]
                     if min_front_long[i] > long > 0:
                         min_front_long[i] = long
                         front_ret[i] = obj
-                elif not find_back_in_current_lane[i] and obj.lane.is_previous_lane_of(lane):
+                elif not find_back_in_current_lane[i] and obj.lane.is_previous_lane_of(cur_lane):
                     long = obj.lane.length - obj.lane.local_coordinates(obj.position)[0] + current_long[i]
                     if min_back_long[i] > long:
                         min_back_long[i] = long
