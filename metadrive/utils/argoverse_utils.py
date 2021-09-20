@@ -243,7 +243,8 @@ def parse_forcasting_data(data_path):
     
     return {
         "locate_info": locate_info, 
-        "city": city
+        "city": city,
+        "map_center": map_center
     }
         
 
