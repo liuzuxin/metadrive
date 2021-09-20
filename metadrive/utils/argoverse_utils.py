@@ -8,15 +8,18 @@ import pickle
 
 engine_init = False
 ag_map = AGMap()
+
+
 def round_int(num, precise=8):
-    return round(num / 10**precise)*10**precise
+    return round(num / 10**precise) * 10**precise
+
 
 def format_pose_files(dataset_dir, timesteps=None):
     data_path = os.path.join(dataset_dir, "poses")
     pose_prefix = "city_SE3_egovehicle_"
     pose_timesteps = sorted([int(i.split("_")[-1].split(".")[0]) for i in os.listdir(data_path)])
-    i = 0 # timestep index
-    j = 0 # pose timesteps index
+    i = 0  # timestep index
+    j = 0  # pose timesteps index
     while True:
         if i >= len(timesteps):
             break
@@ -24,11 +27,17 @@ def format_pose_files(dataset_dir, timesteps=None):
             print("format not complete with {}/{} formated!".format(i, len(timesteps)))
             break
         if round_int(timesteps[i]) == round_int(pose_timesteps[j]):
-            f = os.popen("cp -v {}{}.json {}{}.json".format(os.path.join(data_path, pose_prefix), pose_timesteps[j], os.path.join(data_path, pose_prefix), timesteps[i]))
+            f = os.popen(
+                "cp -v {}{}.json {}{}.json".format(
+                    os.path.join(data_path, pose_prefix), pose_timesteps[j], os.path.join(data_path, pose_prefix),
+                    timesteps[i]
+                )
+            )
             # print(f.readlines())
             f.close()
-            i+=1
-        j+=1
+            i += 1
+        j += 1
+
 
 def parse_tracking_data(dataset_dir, log_id):
 
@@ -39,15 +48,15 @@ def parse_tracking_data(dataset_dir, log_id):
 
     # timesteps = sorted(log_egopose_dict.keys())
     # with open("timestep.pkl", 'wb') as f:
-        # pickle.dump(timesteps, f)
+    # pickle.dump(timesteps, f)
 
     # with open("timestep.pkl", 'rb') as f:
-        # timesteps = pickle.load(f)
+    # timesteps = pickle.load(f)
     # print(timesteps)
     # format_pose_files(os.path.join(dataset_dir, log_id), timesteps)
 
     pfa = PerFrameLabelAccumulator(dataset_dir, dataset_dir, "")
-    pfa.accumulate_per_log_data(log_id = log_id)
+    pfa.accumulate_per_log_data(log_id=log_id)
     log_egopose_dict = pfa.log_egopose_dict[log_id]
     log_timestamp_dict = pfa.log_timestamp_dict[log_id]
     timesteps = sorted(log_egopose_dict.keys())
@@ -67,22 +76,24 @@ def parse_tracking_data(dataset_dir, log_id):
             locate_info[self_id]["diag_len"] = 100
         else:
             locate_info[self_id]["traj"][str(timestep_index)] = np.array([xcenter, -ycenter])
-        
+
         for i, frame_rec in enumerate(log_timestamp_dict[timestep]):
             bbox_city_fr = frame_rec.bbox_city_fr
             uuid = frame_rec.track_uuid
-            center_point = np.mean([bbox_city_fr[0, :2], bbox_city_fr[-1, :2]], axis = 0)
+            center_point = np.mean([bbox_city_fr[0, :2], bbox_city_fr[-1, :2]], axis=0)
             center_point *= np.array([1, -1])
             if uuid not in list(locate_info.keys()):
                 locate_info[uuid] = {
                     "init_pos": center_point,
                     "diag_len": np.linalg.norm(bbox_city_fr[0, :2] - bbox_city_fr[-1, :2]),
                     "traj": {},
-                    "heading": {str(timestep_index): bbox_city_fr[0, :2] - bbox_city_fr[2, :2]}
+                    "heading": {
+                        str(timestep_index): bbox_city_fr[0, :2] - bbox_city_fr[2, :2]
+                    }
                 }
                 continue
             locate_info[uuid]["traj"][str(timestep_index)] = center_point
-            locate_info[uuid]["heading"][str(timestep_index)] = bbox_city_fr[0, :2] - bbox_city_fr[2, :2] 
+            locate_info[uuid]["heading"][str(timestep_index)] = bbox_city_fr[0, :2] - bbox_city_fr[2, :2]
 
     moving_obj_threshold = 0
     for key in list(locate_info.keys()):
@@ -98,7 +109,7 @@ def parse_tracking_data(dataset_dir, log_id):
         # print(dist)
         # crit1 = np.linalg.norm(traj[min_key]-traj[max_key]) < moving_obj_threshold
         # # Remove objects that reappears
-        # # crit2 = int((info['end_t'] - info['start_t']) / 1e8) != len(info['traj']) 
+        # # crit2 = int((info['end_t'] - info['start_t']) / 1e8) != len(info['traj'])
         # print(locate_info[key]["diag_len"])
         crit3 = locate_info[key]["diag_len"] < 3
         # # if crit1 or crit2:
@@ -111,11 +122,11 @@ def parse_tracking_data(dataset_dir, log_id):
     city = city_info["city_name"]
     if ARGOVERSE_AGENT_ID not in locate_info.keys():
         return None
-    agent_init_pos = locate_info[ARGOVERSE_AGENT_ID]["init_pos"] 
+    agent_init_pos = locate_info[ARGOVERSE_AGENT_ID]["init_pos"]
     agent_timesteps = sorted(int(i) for i in locate_info[ARGOVERSE_AGENT_ID]["traj"].keys())
     agent_targ_pos = locate_info[ARGOVERSE_AGENT_ID]["traj"][str(agent_timesteps[-1])]
     # print(agent_init_pos, agent_targ_pos)
-    map_center = (agent_init_pos + agent_targ_pos) / 2 *np.array([1, -1])    
+    map_center = (agent_init_pos + agent_targ_pos) / 2 * np.array([1, -1])
     # ===============get agent locate info========
     from metadrive.component.map.argoverse_map import ArgoverseMap
     from metadrive.engine.engine_utils import initialize_engine
@@ -144,22 +155,23 @@ def parse_tracking_data(dataset_dir, log_id):
                 min_lane = lane
                 min_dist = abs(lat) + abs(long)
         return None if not min_lane else min_lane
-    
+
     spawn_lane = get_nearest_lane(agent_init_pos)
     spawn_lane_index = spawn_lane.index if spawn_lane else None
     targ_lane = get_nearest_lane(agent_targ_pos)
     # print(targ_lane.segment_property)
     targ_node = targ_lane.start_node
-    print(spawn_lane_index,  targ_node)
+    print(spawn_lane_index, targ_node)
     print(map.road_network.get_lane(spawn_lane_index))
-    
+
     return {
-        "locate_info": locate_info, 
+        "locate_info": locate_info,
         "city": city,
         "map_center": map_center,
         "agent_spawn_lane_index": spawn_lane_index,
         "agent_targ_node": targ_node
     }
+
 
 def parse_forcasting_data(data_path):
     data = np.array(pd.read_csv(data_path))
@@ -168,10 +180,7 @@ def parse_forcasting_data(data_path):
     for entry in data:
         _, v_id, _, x, y, city = entry
         if v_id not in locate_info.keys():
-            locate_info[v_id] = {
-                "init_pos": np.array([x, -y]),
-                "targ_pos": np.array([x, -y])
-            }
+            locate_info[v_id] = {"init_pos": np.array([x, -y]), "targ_pos": np.array([x, -y])}
         else:
             locate_info[v_id]["targ_pos"] = np.array([x, -y])
         if v_id == ARGOVERSE_AGENT_ID:
@@ -181,10 +190,9 @@ def parse_forcasting_data(data_path):
     for key in list(locate_info.keys()):
         init_pos = locate_info[key]["init_pos"]
         targ_pos = locate_info[key]["targ_pos"]
-        crit1 = np.linalg.norm(init_pos-targ_pos) < moving_obj_threshold
+        crit1 = np.linalg.norm(init_pos - targ_pos) < moving_obj_threshold
         if crit1:
             locate_info.pop(key)
-
 
     # ===============get map locate info========
     from metadrive.component.map.argoverse_map import ArgoverseMap
@@ -199,7 +207,7 @@ def parse_forcasting_data(data_path):
 
     agent_init_pos = locate_info[ARGOVERSE_AGENT_ID]["init_pos"]
     agent_targ_pos = locate_info[ARGOVERSE_AGENT_ID]["targ_pos"]
-    map_center = (agent_init_pos + agent_targ_pos) / 2 *np.array([1, -1])    
+    map_center = (agent_init_pos + agent_targ_pos) / 2 * np.array([1, -1])
     config = {
         "city": city,
         # "draw_map_resolution": 1024,
@@ -217,7 +225,7 @@ def parse_forcasting_data(data_path):
                 min_lane = lane
                 min_dist = abs(lat) + abs(long)
         return None if not min_lane else min_lane
-    
+
     for key in list(locate_info.keys()):
         init_pos = locate_info[key]["init_pos"]
         targ_pos = locate_info[key]["targ_pos"]
@@ -234,13 +242,9 @@ def parse_forcasting_data(data_path):
         return None
 
     map.destroy()
-    
-    return {
-        "locate_info": locate_info, 
-        "city": city,
-        "map_center": map_center
-    }
-        
+
+    return {"locate_info": locate_info, "city": city, "map_center": map_center}
+
 
 if __name__ == '__main__':
     data = parse_forcasting_data("/home/xzh/Research/code/argoverse-api/forecasting_sample/data/3700.csv")
@@ -249,20 +253,20 @@ if __name__ == '__main__':
     # file_path = "/home/xuezhenghai/argoverse-api/argoverse-tracking/train/"
     # output_path = "/home/xuezhenghai/argoverse-api/argoverse-tracking/train_parsed"
     # if not os.path.isdir(output_path):
-        # os.mkdir(output_path)
+    # os.mkdir(output_path)
     # for log in os.listdir(file_path):
-        # print("Parsing log {}".format(log))
-        # locate_info = parse_tracking_data(file_path, log)
-        # with open(os.path.join(output_path, "{}.pkl".format(log)), 'wb') as f:
-            # pickle.dump(locate_info, f)
+    # print("Parsing log {}".format(log))
+    # locate_info = parse_tracking_data(file_path, log)
+    # with open(os.path.join(output_path, "{}.pkl".format(log)), 'wb') as f:
+    # pickle.dump(locate_info, f)
     parse_tracking_data("../../../argoverse-api/argoverse-tracking/sample/", "e9a96218-365b-3ecd-a800-ed2c4c306c78")
 
     # file_path = "/home/xuezhenghai/argoverse-api/argoverse-tracking/val/"
     # output_path = "/home/xuezhenghai/argoverse-api/argoverse-tracking/test_parsed"
     # if not os.path.isdir(output_path):
-        # os.mkdir(output_path)
+    # os.mkdir(output_path)
     # for log in os.listdir(file_path):
-        # print("Parsing log {}".format(log))
-        # locate_info = parse_tracking_data(file_path, log)
-        # with open(os.path.join(output_path, "{}.pkl".format(log)), 'wb') as f:
-            # pickle.dump(locate_info, f)
+    # print("Parsing log {}".format(log))
+    # locate_info = parse_tracking_data(file_path, log)
+    # with open(os.path.join(output_path, "{}.pkl".format(log)), 'wb') as f:
+    # pickle.dump(locate_info, f)

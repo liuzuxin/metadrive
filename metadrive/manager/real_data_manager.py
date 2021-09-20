@@ -74,23 +74,31 @@ class RealDataManager(BaseManager):
             self._create_from_tracking(locate_info, map)
         else:
             self._create_from_forecasting(locate_info)
+
     def _create_from_forecasting(self, locate_info):
         for key in locate_info.keys():
             this_info = locate_info[key]
-            generated_v = self.spawn_object(SVehicle, vehicle_config={
-                "spawn_lane_index": this_info["spawn_lane_index"],
-                "spawn_longitude": this_info["long"],
-                # "spawn_lateral": this_info["lat"],
-                "destination_node": this_info["targ_node"],
-            })
+            generated_v = self.spawn_object(
+                SVehicle,
+                vehicle_config={
+                    "spawn_lane_index": this_info["spawn_lane_index"],
+                    "spawn_longitude": this_info["long"],
+                    # "spawn_lateral": this_info["lat"],
+                    "destination_node": this_info["targ_node"],
+                }
+            )
             generated_v.set_static(True)
             self.engine.add_policy(generated_v.id, IDMPolicy(generated_v, self.generate_seed()))
             self._traffic_vehicles.append(generated_v)
 
     def _filter_vehicle_configs(self, locate_info, max_to_keep=10):
-        locate_info = dict(sorted(locate_info.items(), 
-                                  key=lambda x:np.linalg.norm(x[1]["init_pos"] - list(x[1]["traj"].values())[-1]), 
-                                  reverse=True))
+        locate_info = dict(
+            sorted(
+                locate_info.items(),
+                key=lambda x: np.linalg.norm(x[1]["init_pos"] - list(x[1]["traj"].values())[-1]),
+                reverse=True
+            )
+        )
         key_to_pop = []
         for i, key in enumerate(locate_info.keys()):
             if i >= max_to_keep:
@@ -98,7 +106,7 @@ class RealDataManager(BaseManager):
         for config in self.potential_vehicle_configs:
             if config["id"] in key_to_pop:
                 config["id"] = None
-        
+
     def _create_from_tracking(self, locate_info, map):
         pos_dict = {i: j["init_pos"] for i, j in zip(locate_info.keys(), locate_info.values())}
 

@@ -25,8 +25,9 @@ argoverse_destination_node = "968"
 argoverse_log_id = "c6911883-1843-3727-8eaa-41dc8cda8993"
 
 logging.basicConfig(level=logging.INFO)
-class ArgoverseMapManager(MapManager):
 
+
+class ArgoverseMapManager(MapManager):
     def __init__(self, *args, **kwargs):
         super(ArgoverseMapManager, self).__init__(*args, **kwargs)
         self.ag_map = AGMap()
@@ -35,15 +36,17 @@ class ArgoverseMapManager(MapManager):
     def reset(self):
         if self.current_map is None:
             config = self.engine.global_config["map_config"]
-            config_key = "%.1f-%.1f"%(config["center"][0], config['center'][1])
+            config_key = "%.1f-%.1f" % (config["center"][0], config['center'][1])
             if config_key in self.cached_maps:
                 logging.info("use existing maps")
                 map = self.cached_maps[config_key]
             else:
                 logging.info("use new maps")
-                map = self.spawn_object(ArgoverseMap, ag_map=self.ag_map,
-                                        map_config=config,
-                                        )
+                map = self.spawn_object(
+                    ArgoverseMap,
+                    ag_map=self.ag_map,
+                    map_config=config,
+                )
                 self.cached_maps[config_key] = map
             self.engine.map_manager.load_map(map)
         else:
@@ -51,15 +54,16 @@ class ArgoverseMapManager(MapManager):
 
 
 class ArgoverseEnv(MetaDriveEnv):
-
     def __init__(self, log_id, *args, **kwargs):
         if log_id:
-            root_path = pathlib.PurePosixPath(__file__).parent.parent if not is_win() else pathlib.Path(__file__).resolve(
-            ).parent.parent
-            data_path = root_path.joinpath("assets").joinpath("real_data").joinpath("test_parsed").joinpath("{}.pkl".format(log_id))
+            root_path = pathlib.PurePosixPath(__file__).parent.parent if not is_win(
+            ) else pathlib.Path(__file__).resolve().parent.parent
+            data_path = root_path.joinpath("assets").joinpath("real_data").joinpath("test_parsed").joinpath(
+                "{}.pkl".format(log_id)
+            )
             with open(data_path, 'rb') as f:
                 loaded_config = pickle.load(f)
-                
+
             self.map_config = {
                 "city": loaded_config["city"],
                 "center": loaded_config["map_center"],
@@ -74,8 +78,8 @@ class ArgoverseEnv(MetaDriveEnv):
             }
         else:
             log_id = argoverse_log_id
-            root_path = pathlib.PurePosixPath(__file__).parent.parent if not is_win() else pathlib.Path(__file__).resolve(
-            ).parent.parent
+            root_path = pathlib.PurePosixPath(__file__).parent.parent if not is_win(
+            ) else pathlib.Path(__file__).resolve().parent.parent
             data_path = root_path.joinpath("assets").joinpath("real_data").joinpath("{}.pkl".format(log_id))
             with open(data_path, 'rb') as f:
                 locate_info, _ = pickle.load(f)
@@ -96,7 +100,7 @@ class ArgoverseEnv(MetaDriveEnv):
         self.agent_init_speed = (agent_info[1] - agent_info[0]) * FREQ
         self.argoverse_config["locate_info"].pop(ARGOVERSE_AGENT_ID)
         super(ArgoverseEnv, self).__init__(*args, **kwargs)
-    
+
     def _post_process_config(self, config):
         config = super(ArgoverseEnv, self)._post_process_config(config)
         config["vehicle_config"]["spawn_lane_index"] = self.argoverse_config["agent_pos"]["spawn_lane_index"]
@@ -112,8 +116,8 @@ class ArgoverseEnv(MetaDriveEnv):
         self.engine.register_manager("real_data_manager", RealDataManager())
         self.engine.update_manager("map_manager", ArgoverseMapManager())
 
+
 class ArgoverseMultiEnv(MetaDriveEnv):
-    
     def __init__(self, config: dict = None):
 
         self.mode = config.pop("mode")
@@ -123,19 +127,22 @@ class ArgoverseMultiEnv(MetaDriveEnv):
         ).parent.parent
         self.file_path = root_path.joinpath("assets").joinpath("real_data").joinpath("{}_parsed".format(self.mode))
         self.data_files = listdir(self.file_path)
-        self.envs = [ArgoverseEnv(data_file.split(".")[0]) for data_file in self.data_files[self.start_seed:self.start_seed+self.env_num]]
+        self.envs = [
+            ArgoverseEnv(data_file.split(".")[0])
+            for data_file in self.data_files[self.start_seed:self.start_seed + self.env_num]
+        ]
         self.start_seed = 0
 
     def reset(self, episode_data: dict = None, force_seed: Union[None, int] = None):
         self._reset_global_seed(force_seed)
         self.current_env = self.envs[self.current_seed]
         self.current_env.reset()
-        
+
     def step(self, actions: Union[np.ndarray, Dict[AnyStr, np.ndarray]]):
         self.current_env.step(actions)
 
-class ArgoverseGeneralizationEnv(MetaDriveEnv):
 
+class ArgoverseGeneralizationEnv(MetaDriveEnv):
     def __init__(self, config: dict = None):
         self.mode = config.pop("mode", "train")
         self.source = config.pop("source", "tracking")
@@ -148,7 +155,6 @@ class ArgoverseGeneralizationEnv(MetaDriveEnv):
             root_path.joinpath("assets").joinpath("real_data").joinpath("{}_forecasting".format(self.mode))
         self.agent_pos_path = root_path.joinpath("assets").joinpath("real_data").joinpath("agent_pos")
         self.data_files = sorted(listdir(self.file_path))
-
 
     def reset(self, episode_data: dict = None, force_seed: Union[None, int] = None):
         """
@@ -192,13 +198,13 @@ class ArgoverseGeneralizationEnv(MetaDriveEnv):
         data_path = self.file_path.joinpath(current_data_file)
         with open(data_path, 'rb') as f:
             loaded_config = pickle.load(f)
-            
+
         locate_info = loaded_config["locate_info"]
         if ARGOVERSE_AGENT_ID not in locate_info.keys():
             agent_id = list(locate_info.keys())[0]
         else:
             agent_id = ARGOVERSE_AGENT_ID
-            
+
         config = self.engine.global_config
         config["vehicle_config"]["spawn_lane_index"] = locate_info[agent_id]["spawn_lane_index"]
         config["vehicle_config"]["destination_node"] = locate_info[agent_id]["targ_node"]
@@ -210,7 +216,9 @@ class ArgoverseGeneralizationEnv(MetaDriveEnv):
         config["map_config"].update(
             {
                 "city": loaded_config["city"],
-                "center": ArgoverseMap.metadrive_position([loaded_config["map_center"][0], -loaded_config["map_center"][1]]),
+                "center": ArgoverseMap.metadrive_position(
+                    [loaded_config["map_center"][0], -loaded_config["map_center"][1]]
+                ),
                 "radius": 150
             }
         )
@@ -223,7 +231,7 @@ class ArgoverseGeneralizationEnv(MetaDriveEnv):
         current_id = current_data_file.split(".")[0]
         print("map file: ", current_data_file)
         data_path = self.file_path.joinpath(current_data_file)
-            
+
         with open(data_path, 'rb') as f:
             loaded_config = pickle.load(f)
         map_config = {
@@ -236,19 +244,14 @@ class ArgoverseGeneralizationEnv(MetaDriveEnv):
             with open(self.agent_pos_path.joinpath(current_id), 'r') as f:
                 spawn_lane_index = eval(f.readline())
                 targ_lane_index = eval(f.readline())
-            agent_pos = {
-                "spawn_lane_index": spawn_lane_index,
-                "destination_node": targ_lane_index[0]
-            }
+            agent_pos = {"spawn_lane_index": spawn_lane_index, "destination_node": targ_lane_index[0]}
         else:
             agent_pos = {
                 "spawn_lane_index": loaded_config["agent_spawn_lane_index"],
                 "destination_node": loaded_config["agent_targ_node"]
             }
 
-        self.argoverse_config = {
-            "locate_info": loaded_config["locate_info"]
-        }
+        self.argoverse_config = {"locate_info": loaded_config["locate_info"]}
         agent_init_pos = self.argoverse_config["locate_info"][ARGOVERSE_AGENT_ID]["init_pos"]
         self.argoverse_config["locate_info"].pop(ARGOVERSE_AGENT_ID)
 
@@ -265,20 +268,24 @@ class ArgoverseGeneralizationEnv(MetaDriveEnv):
                 "radius": map_config["radius"]
             }
         )
-        
+
+
 if __name__ == '__main__':
     # env = ArgoverseMultiEnv(dict(mode="train",environment_num=3, start_seed=15, use_render=False))
-    env = ArgoverseGeneralizationEnv(dict(
+    env = ArgoverseGeneralizationEnv(
+        dict(
             mode="train",
             source="forecasting",
             environment_num=20,
             start_seed=10,
             use_render=True,
             manual_control=True,
-            disable_model_compression=True))
+            disable_model_compression=True
+        )
+    )
     while True:
         env.reset()
-        env.vehicle.expert_takeover=True
+        env.vehicle.expert_takeover = True
         for _ in range(200):
             env.step([0., 0.])
             info = {}
@@ -288,9 +295,11 @@ if __name__ == '__main__':
     for i in range(0, 15):
         print(i)
         try:
-            env = ArgoverseGeneralizationEnv(dict(mode="test", environment_num=1, start_seed=i, use_render=False, manual_control=True))
+            env = ArgoverseGeneralizationEnv(
+                dict(mode="test", environment_num=1, start_seed=i, use_render=False, manual_control=True)
+            )
             env.reset()
-            env.vehicle.expert_takeover=True
+            env.vehicle.expert_takeover = True
             for i in range(1, 20):
                 o, r, d, info = env.step([0., 0.0])
         except (TypeError, AssertionError) as e:

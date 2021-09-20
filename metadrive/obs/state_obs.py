@@ -116,7 +116,7 @@ class StateObservation(ObservationBase):
             info += vehicle.lane_line_detector.perceive(vehicle, vehicle.engine.physics_world.static_world).cloud_points
 
         else:
-        
+
             # If the lane line detector is turn off, then add the offset of current position
             # against the central of current lane to the state. If vehicle is centered in the lane, then the offset
             # is 0 and vice versa.
