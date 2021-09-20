@@ -36,6 +36,9 @@ class WayPointLane(AbstractLane):
         self.is_straight = True if abs(self.heading_theta_at(0.1) -
                                        self.heading_theta_at(self.length - 0.1)) < np.deg2rad(10) else False
 
+        self.start = self.position(0, 0)
+        self.end = self.position(self.length, 0)
+
     def _get_properties(self):
         ret = []
         for idx, p_start in enumerate(self.center_line_points[:-1]):

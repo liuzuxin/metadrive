@@ -22,6 +22,7 @@ class AbstractLane:
     def __init__(self):
         self.speed_limit = 1000  # should be set manually
         self.index = None
+        self.end = None
 
     def set_speed_limit(self, speed_limit):
         self.speed_limit = speed_limit
@@ -117,6 +118,11 @@ class AbstractLane:
         return abs(r) + (a if a > 0 else 0) + (b if b > 0 else 0)
 
     def is_previous_lane_of(self, target_lane):
+        """
+        It is possible that this lane is ended and another lane is connected to the end of this lane.
+        If so, then return True.
+        """
+        assert self.end is not None, "Please implement lane.end"
         x_1, y_1 = self.end
         x_2, y_2 = target_lane.start
         if norm(x_1 - x_2, y_1 - y_2) < 1e-1:
