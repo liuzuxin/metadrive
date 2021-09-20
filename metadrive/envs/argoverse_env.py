@@ -210,7 +210,7 @@ class ArgoverseGeneralizationEnv(MetaDriveEnv):
             {
                 "city": loaded_config["city"],
                 "center": ArgoverseMap.metadrive_position([loaded_config["map_center"][0], -loaded_config["map_center"][1]]),
-                "radius": 50
+                "radius": 150
             }
         )
 
@@ -269,7 +269,7 @@ if __name__ == '__main__':
     # env = ArgoverseMultiEnv(dict(mode="train",environment_num=3, start_seed=15, use_render=False))
     env = ArgoverseGeneralizationEnv(dict(
             mode="train",
-            source="tracking",
+            source="forecasting",
             environment_num=20,
             start_seed=10,
             use_render=True,

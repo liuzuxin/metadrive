@@ -79,7 +79,8 @@ class RealDataManager(BaseManager):
             this_info = locate_info[key]
             generated_v = self.spawn_object(SVehicle, vehicle_config={
                 "spawn_lane_index": this_info["spawn_lane_index"],
-                "spawn_longitude": 0,
+                # "spawn_longitude": this_info["long"],
+                # "spawn_lateral": this_info["lat"],
                 "destination_node": this_info["targ_node"],
             })
             generated_v.set_static(True)
@@ -132,6 +133,7 @@ class RealDataManager(BaseManager):
                 v_config.update(self.engine.global_config["traffic_vehicle_config"])
                 generated_v = self.spawn_object(config["type"], vehicle_config=v_config)
                 generated_v.set_static(True)
+                generated_v.set_position(generated_v.position)
                 self.engine.add_policy(generated_v.id, ReplayPolicy(generated_v, locate_info[config["id"]]))
                 self._traffic_vehicles.append(generated_v)
 
