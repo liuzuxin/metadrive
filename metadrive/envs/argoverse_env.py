@@ -224,9 +224,6 @@ class ArgoverseGeneralizationEnv(MetaDriveEnv):
 
     def _reset_real_config(self):
         current_data_file = self.data_files[self.current_seed]
-        # current_data_file = "b1ca08f1-24b0-3c39-ba4e-d5a92868462c.pkl" # infinite loop in navigation point searching
-        # current_data_file = "70d2aea5-dbeb-333d-b21e-76a7f2f1ba1c.pkl" # delayed navigation point selection
-        current_data_file = "aeb73d7a-8257-3225-972e-99307b3a5cb0.pkl"
         current_id = current_data_file.split(".")[0]
         print("map file: ", current_data_file)
         data_path = self.file_path.joinpath(current_data_file)
