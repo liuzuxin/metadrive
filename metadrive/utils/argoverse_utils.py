@@ -181,16 +181,8 @@ def parse_forcasting_data(data_path):
     for key in list(locate_info.keys()):
         init_pos = locate_info[key]["init_pos"]
         targ_pos = locate_info[key]["targ_pos"]
-    #     # Remove static objects
-    #     min_key = min(traj.keys())
-    #     max_key = max(traj.keys())
         crit1 = np.linalg.norm(init_pos-targ_pos) < moving_obj_threshold
-    #     # Remove objects that reappears
-    #     # crit2 = int((info['end_t'] - info['start_t']) / 1e8) != len(info['traj']) 
-    #     # if crit1 or crit2:
         if crit1:
-            if key == ARGOVERSE_AGENT_ID:
-                return None
             locate_info.pop(key)
 
 
@@ -233,11 +225,13 @@ def parse_forcasting_data(data_path):
         spawn_lane_index = (spawn_lane.start_node, spawn_lane.end_node, 0) if spawn_lane else None
         targ_lane = get_nearest_lane(targ_pos)
         targ_node = targ_lane.start_node if targ_lane else None
-        if spawn_lane and targ_node:
+        if spawn_lane and targ_node and spawn_lane[0] != targ_node:
             locate_info[key]["spawn_lane_index"] = spawn_lane_index
             locate_info[key]["targ_node"] = targ_node
         else:
             locate_info.pop(key)
+    if len(locate_info.keys()) == 0:
+        return None
 
     map.destroy()
     
