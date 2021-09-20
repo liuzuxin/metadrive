@@ -187,6 +187,7 @@ class ArgoverseGeneralizationEnv(MetaDriveEnv):
 
     def _reset_real_config_forecasting(self):
         current_data_file = self.data_files[self.current_seed]
+        current_data_file = "109411.pkl"
         print("map file: ", current_data_file)
         data_path = self.file_path.joinpath(current_data_file)
         with open(data_path, 'rb') as f:
@@ -210,7 +211,7 @@ class ArgoverseGeneralizationEnv(MetaDriveEnv):
             {
                 "city": loaded_config["city"],
                 "center": ArgoverseMap.metadrive_position([loaded_config["map_center"][0], -loaded_config["map_center"][1]]),
-                "radius": 50
+                "radius": 150
             }
         )
 
