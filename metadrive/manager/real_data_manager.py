@@ -90,8 +90,8 @@ class RealDataManager(BaseManager):
                 )
             except (KeyError, IndexError) as e:
                 continue
-            generated_v.set_static(True)
             self.engine.add_policy(generated_v.id, IDMPolicy(generated_v, self.generate_seed()))
+            generated_v.set_position(generated_v.position)
             self._traffic_vehicles.append(generated_v)
 
     def _filter_vehicle_configs(self, locate_info, max_to_keep=10):
@@ -144,7 +144,6 @@ class RealDataManager(BaseManager):
                 v_config.update(self.engine.global_config["traffic_vehicle_config"])
                 generated_v = self.spawn_object(config["type"], vehicle_config=v_config)
                 generated_v.set_static(True)
-                generated_v.set_position(generated_v.position)
                 self.engine.add_policy(generated_v.id, ReplayPolicy(generated_v, locate_info[config["id"]]))
                 self._traffic_vehicles.append(generated_v)
 
