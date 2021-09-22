@@ -273,8 +273,8 @@ if __name__ == '__main__':
             mode="train",
             source="forecasting",
             environment_num=20,
-            start_seed=10,
-            use_render=False,
+            start_seed=0,
+            use_render=True,
             manual_control=True,
             disable_model_compression=True
         )
@@ -282,23 +282,22 @@ if __name__ == '__main__':
     while True:
         env.reset()
         env.vehicle.expert_takeover = True
-        for _ in range(2):
+        for _ in range(100):
             env.step([0., 0.])
             info = {}
             info["lane_index"] = env.vehicle.lane_index
-            # env.render(text=info)
+            env.render(text=info)
             # print(info)
-    for i in range(0, 15):
+    for i in range(0, 300):
         print(i)
         try:
             env = ArgoverseGeneralizationEnv(
-                dict(mode="test", environment_num=1, start_seed=i, use_render=False, manual_control=True)
+                dict(mode="train", source="forecasting", environment_num=1, start_seed=i, use_render=False, manual_control=True)
             )
             env.reset()
             env.vehicle.expert_takeover = True
             for i in range(1, 20):
                 o, r, d, info = env.step([0., 0.0])
-        except (TypeError, AssertionError) as e:
-            print("Assertion Failed!")
-            raise e
+        except:
+            print("Error!")
         env.close()
