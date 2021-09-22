@@ -24,3 +24,6 @@
 /metadrive/cutils.cp37-win_amd64.pyd
 **/top_down_view
 **/video
+**/*.png
+**/*.mp4
+**/*.wmv
