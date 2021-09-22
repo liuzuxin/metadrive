@@ -270,8 +270,8 @@ if __name__ == '__main__':
     # env = ArgoverseMultiEnv(dict(mode="train",environment_num=3, start_seed=15, use_render=False))
     env = ArgoverseGeneralizationEnv(
         dict(
-            mode="train",
-            source="forecasting",
+            mode="test",
+            source="tracking",
             environment_num=20,
             start_seed=0,
             use_render=True,
@@ -282,11 +282,13 @@ if __name__ == '__main__':
     while True:
         env.reset()
         env.vehicle.expert_takeover = True
-        for _ in range(100):
-            env.step([0., 0.])
+        while True:
+            o, r, d, info = env.step([0., 0.])
             info = {}
             info["lane_index"] = env.vehicle.lane_index
             env.render(text=info)
+            if d:
+                break
             # print(info)
     for i in range(0, 300):
         print(i)
