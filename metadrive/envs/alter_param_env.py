@@ -6,6 +6,7 @@ import random
 import numpy as np
 
 class EnvParams():
+    # Available environment parameters
     # ========map param========
     LANE_WIDTH = "_lane_width"             # ok
     LANE_NUM = "_lane_num"                 # ok
@@ -49,6 +50,7 @@ if __name__ == '__main__':
         map=4,  # seven block
         start_seed=random.randint(0, 1000)
     )
+    # Specify environment parameters
     config.update({EnvParams.LANE_WIDTH: 10, EnvParams.LANE_NUM: 10, EnvParams.BLOCK_NUM: 10, EnvParams.DENSITY: 0.9})
     parser = argparse.ArgumentParser()
     parser.add_argument("--observation", type=str, default="lidar", choices=["lidar", "rgb_camera"])
