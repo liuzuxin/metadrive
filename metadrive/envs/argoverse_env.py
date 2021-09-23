@@ -268,33 +268,33 @@ class ArgoverseGeneralizationEnv(MetaDriveEnv):
 
 if __name__ == '__main__':
     # env = ArgoverseMultiEnv(dict(mode="train",environment_num=3, start_seed=15, use_render=False))
-    env = ArgoverseGeneralizationEnv(
-        dict(
-            mode="test",
-            source="tracking",
-            environment_num=20,
-            start_seed=0,
-            use_render=True,
-            manual_control=True,
-            disable_model_compression=True
-        )
-    )
-    while True:
-        env.reset()
-        env.vehicle.expert_takeover = True
-        while True:
-            o, r, d, info = env.step([0., 0.])
-            info = {}
-            info["lane_index"] = env.vehicle.lane_index
-            env.render(text=info)
-            if d:
-                break
-            # print(info)
-    for i in range(0, 300):
+    # env = ArgoverseGeneralizationEnv(
+    #     dict(
+    #         mode="all",
+    #         source="tracking",
+    #         environment_num=74,
+    #         start_seed=0,
+    #         use_render=True,
+    #         manual_control=True,
+    #         disable_model_compression=True
+    #     )
+    # )
+    # while True:
+    #     env.reset()
+    #     env.vehicle.expert_takeover = True
+    #     while True:
+    #         o, r, d, info = env.step([0., 0.])
+    #         info = {}
+    #         info["lane_index"] = env.vehicle.lane_index
+    #         env.render(text=info)
+    #         if d:
+    #             break
+    #         # print(info)
+    for i in range(0, 74):
         print(i)
         try:
             env = ArgoverseGeneralizationEnv(
-                dict(mode="train", source="forecasting", environment_num=1, start_seed=i, use_render=False, manual_control=True)
+                dict(mode="all", source="tracking", environment_num=1, start_seed=i, use_render=False, manual_control=True)
             )
             env.reset()
             env.vehicle.expert_takeover = True
