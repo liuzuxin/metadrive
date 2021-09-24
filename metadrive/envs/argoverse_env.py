@@ -7,6 +7,7 @@ from typing import Union, Dict, AnyStr
 
 import numpy as np
 
+from metadrive.component.blocks.first_block import FirstPGBlock
 from metadrive.component.map.argoverse_map import ArgoverseMap
 from metadrive.engine.engine_utils import get_global_config, get_engine
 from metadrive.envs.metadrive_env import MetaDriveEnv
@@ -330,16 +331,24 @@ class ArgoversePGGeneralization(ArgoverseGeneralizationEnv):
         return self._get_reset_return()
 
     def random_reset_env(self):
-        if get_np_random().rand() < 0.5:
-            new = "pg_map"
-            self.engine.update_manager("map_manager", self.engine.pg_map_manager, destroy_old_manager=False)
-        else:
-            new = "argoverse"
-            self.engine.update_manager("map_manager", self.engine.ag_map_manager, destroy_old_manager=False)
         before_reset_mgr = list(self.engine._managers.keys())
         for manager in self.EXCLUDE_MGR[self.current_env_type]:
             before_reset_mgr.remove(manager)
-
+        if get_np_random().rand() < 0.5:
+            new = "pg_map"
+            self.engine.update_manager("map_manager", self.engine.pg_map_manager, destroy_old_manager=False)
+            self.config["vehicle_config"]["spawn_lane_index"] = (FirstPGBlock.NODE_1, FirstPGBlock.NODE_2, 0)
+            self.config["vehicle_config"]["destination_node"] = None
+            # work around
+            self.config["traffic_density"] = 0.1
+            before_reset_mgr.append("traffic_manager")
+            if self.current_env_type == "argoverse":
+                self.engine.traffic_manager.density=0.1
+        else:
+            new = "argoverse"
+            self.engine.traffic_manager.density = 0.
+            self.engine.update_manager("map_manager", self.engine.ag_map_manager, destroy_old_manager=False)
+        self.engine.map_manager.before_reset()
         reset_mgr = list(self.engine._managers.keys())
         for manager in self.EXCLUDE_MGR[new]:
             reset_mgr.remove(manager)
@@ -348,6 +357,7 @@ class ArgoversePGGeneralization(ArgoverseGeneralizationEnv):
                           reset_managers=reset_mgr,
                           after_reset_managers=reset_mgr)
         self.current_env_type = new
+
 
 if __name__ == '__main__':
     # env = ArgoverseMultiEnv(dict(mode="train",environment_num=3, start_seed=15, use_render=False))
@@ -377,12 +387,12 @@ if __name__ == '__main__':
     for i in range(0, 74):
         print(i)
         env = ArgoversePGGeneralization(
-            dict(mode="all", source="tracking", environment_num=1, start_seed=i, use_render=True,
-                 manual_control=True)
-        )
+            dict(mode="all", source="tracking", environment_num=1, start_seed=0, use_render=True, debug=True,
+                 traffic_density=0.1,
+                 manual_control=True))
         env.reset()
         env.vehicle.expert_takeover = True
-        for i in range(1, 200):
+        for i in range(1, 20000):
             o, r, d, info = env.step([0., 0.0])
         # except:
         #     print("Error!")
