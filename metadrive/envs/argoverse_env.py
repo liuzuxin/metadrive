@@ -1,4 +1,5 @@
 import pathlib
+from metadrive.manager.map_manager import MapManager
 import time
 import pickle
 from os import listdir
@@ -265,6 +266,15 @@ class ArgoverseGeneralizationEnv(MetaDriveEnv):
             }
         )
 
+
+class ArgoversePGGeneralization(ArgoverseGeneralizationEnv):
+
+    def setup_engine(self):
+        super(ArgoverseGeneralizationEnv, self).setup_engine()
+        from metadrive.manager.real_data_manager import RealDataManager
+        self.engine.register_manager("real_data_manager", RealDataManager())
+        self.engine.register_manager("argoverse_map_manager", ArgoverseMapManager())
+        self.engine.register_manager("pg_map_manager", MapManager())
 
 if __name__ == '__main__':
     # env = ArgoverseMultiEnv(dict(mode="train",environment_num=3, start_seed=15, use_render=False))
