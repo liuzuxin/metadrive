@@ -1,17 +1,18 @@
-import pathlib
-from metadrive.manager.map_manager import MapManager
-import time
-import pickle
-from os import listdir
-from typing import Union, Dict, AnyStr, Optional, Tuple
-from collections import defaultdict
-import numpy as np
 import logging
+import pathlib
+import pickle
+from collections import defaultdict
+from os import listdir
+from typing import Union, Dict, AnyStr
+
+import numpy as np
 
 from metadrive.component.map.argoverse_map import ArgoverseMap
+from metadrive.engine.engine_utils import get_global_config, get_engine
 from metadrive.envs.metadrive_env import MetaDriveEnv
 from metadrive.manager.map_manager import MapManager
 from metadrive.utils import is_win, ARGOVERSE_AGENT_ID
+from metadrive.utils.random_utils import get_np_random
 
 try:
     from argoverse.map_representation.map_api import ArgoverseMap as AGMap
@@ -120,7 +121,6 @@ class ArgoverseEnv(MetaDriveEnv):
 
 class ArgoverseMultiEnv(MetaDriveEnv):
     def __init__(self, config: dict = None):
-
         self.mode = config.pop("mode")
         super(ArgoverseMultiEnv, self).__init__(config)
         # check parsed training and testing data
@@ -267,14 +267,81 @@ class ArgoverseGeneralizationEnv(MetaDriveEnv):
         )
 
 
+def temporary_global_config(config_dict):
+    def config_wrapper(func):
+        def wrapper(*args, **kwargs):
+            origin_config = get_global_config()
+            copy_config = origin_config.copy(True)
+            origin_config.update(config_dict)
+            ret = func(*args, **kwargs)
+            get_engine().global_config.update(copy_config)
+            return ret
+
+        return wrapper
+
+    return config_wrapper
+
+
 class ArgoversePGGeneralization(ArgoverseGeneralizationEnv):
+    EXCLUDE_MGR = {"argoverse":["traffic_manager", "pg_map_manager", "ag_map_manager"],
+                   "pg_map": ["real_data_manager", "ag_map_manager", "pg_map_manager"]}
 
     def setup_engine(self):
         super(ArgoverseGeneralizationEnv, self).setup_engine()
         from metadrive.manager.real_data_manager import RealDataManager
         self.engine.register_manager("real_data_manager", RealDataManager())
-        self.engine.register_manager("argoverse_map_manager", ArgoverseMapManager())
+        ag_manager = ArgoverseMapManager()
+        self.engine.update_manager("map_manager", ag_manager)
+        self.engine.register_manager("ag_map_manager", ag_manager)
+        self.add_pg_manager()
+        self.current_env = "argoverse"
+
+    @temporary_global_config({"start_seed": 0, "environment_num": 50})
+    def add_pg_manager(self):
         self.engine.register_manager("pg_map_manager", MapManager())
+
+    def reset(self, episode_data: dict = None, force_seed: Union[None, int] = None):
+        """
+        Reset the env, scene can be restored and replayed by giving episode_data
+        Reset the environment or load an episode from episode data to recover is
+        setup map and agent parameters
+        :param episode_data: Feed the episode data to replay an episode
+        :param force_seed: The seed to set the env.
+        :return: None
+        """
+        self.lazy_init()  # it only works the first time when reset() is called to avoid the error when render
+        self._reset_global_seed(force_seed)
+        if self.source == 'tracking':
+            self._reset_real_config()
+        elif self.source == 'forecasting':
+            self._reset_real_config_forecasting()
+        else:
+            assert False
+
+        if self._top_down_renderer is not None:
+            self._top_down_renderer.reset(self.current_map)
+
+        self.dones = {agent_id: False for agent_id in self.vehicles.keys()}
+        self.episode_steps = 0
+        self.episode_rewards = defaultdict(float)
+        self.episode_lengths = defaultdict(int)
+        assert (len(self.vehicles) == self.num_agents) or (self.num_agents == -1)
+
+        return self._get_reset_return()
+
+    def random_env(self):
+        if get_np_random().rand() < 0.5:
+            new = "pg_map"
+            self.engine.update_manager("map_manager", self.engine.pg_map_manager, destroy_manager=False)
+        else:
+            new = "argoverse"
+            self.engine.update_manager("map_manager", self.engine.pg_map_manager, destroy_manager=False)
+
+
+        self.engine.reset(before_reset_managers=all_manager,
+                          reset_managers=all_manager,
+                          after_reset_managers=all_manager)
+
 
 if __name__ == '__main__':
     # env = ArgoverseMultiEnv(dict(mode="train",environment_num=3, start_seed=15, use_render=False))
@@ -300,16 +367,17 @@ if __name__ == '__main__':
     #         if d:
     #             break
     #         # print(info)
+    #         # print(info)
     for i in range(0, 74):
         print(i)
-        try:
-            env = ArgoverseGeneralizationEnv(
-                dict(mode="all", source="tracking", environment_num=1, start_seed=i, use_render=False, manual_control=True)
-            )
-            env.reset()
-            env.vehicle.expert_takeover = True
-            for i in range(1, 20):
-                o, r, d, info = env.step([0., 0.0])
-        except:
-            print("Error!")
+        env = ArgoversePGGeneralization(
+            dict(mode="all", source="tracking", environment_num=1, start_seed=i, use_render=False,
+                 manual_control=True)
+        )
+        env.reset()
+        env.vehicle.expert_takeover = True
+        for i in range(1, 20):
+            o, r, d, info = env.step([0., 0.0])
+        # except:
+        #     print("Error!")
         env.close()
