@@ -283,7 +283,7 @@ def temporary_global_config(config_dict):
     return config_wrapper
 
 
-class ArgoversePGGeneralization(ArgoverseGeneralizationEnv):
+class ArgoversePGGeneralizationEnv(ArgoverseGeneralizationEnv):
     EXCLUDE_MGR = {"argoverse": ["traffic_manager", "pg_map_manager", "ag_map_manager"],
                    "pg_map": ["real_data_manager", "ag_map_manager", "pg_map_manager"]}
 
@@ -386,7 +386,7 @@ if __name__ == '__main__':
     #         # print(info)
     for i in range(0, 74):
         print(i)
-        env = ArgoversePGGeneralization(
+        env = ArgoversePGGeneralizationEnv(
             dict(mode="all", source="tracking", environment_num=1, start_seed=0, use_render=True, debug=True,
                  traffic_density=0.1,
                  manual_control=True))
