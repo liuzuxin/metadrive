@@ -283,7 +283,7 @@ def temporary_global_config(config_dict):
 
 
 class ArgoversePGGeneralization(ArgoverseGeneralizationEnv):
-    EXCLUDE_MGR = {"argoverse":["traffic_manager", "pg_map_manager", "ag_map_manager"],
+    EXCLUDE_MGR = {"argoverse": ["traffic_manager", "pg_map_manager", "ag_map_manager"],
                    "pg_map": ["real_data_manager", "ag_map_manager", "pg_map_manager"]}
 
     def setup_engine(self):
@@ -294,7 +294,7 @@ class ArgoversePGGeneralization(ArgoverseGeneralizationEnv):
         self.engine.update_manager("map_manager", ag_manager)
         self.engine.register_manager("ag_map_manager", ag_manager)
         self.add_pg_manager()
-        self.current_env = "argoverse"
+        self.current_env_type = "argoverse"
 
     @temporary_global_config({"start_seed": 0, "environment_num": 50})
     def add_pg_manager(self):
@@ -317,7 +317,7 @@ class ArgoversePGGeneralization(ArgoverseGeneralizationEnv):
             self._reset_real_config_forecasting()
         else:
             assert False
-
+        self.random_reset_env()
         if self._top_down_renderer is not None:
             self._top_down_renderer.reset(self.current_map)
 
@@ -329,19 +329,25 @@ class ArgoversePGGeneralization(ArgoverseGeneralizationEnv):
 
         return self._get_reset_return()
 
-    def random_env(self):
+    def random_reset_env(self):
         if get_np_random().rand() < 0.5:
             new = "pg_map"
-            self.engine.update_manager("map_manager", self.engine.pg_map_manager, destroy_manager=False)
+            self.engine.update_manager("map_manager", self.engine.pg_map_manager, destroy_old_manager=False)
         else:
             new = "argoverse"
-            self.engine.update_manager("map_manager", self.engine.pg_map_manager, destroy_manager=False)
+            self.engine.update_manager("map_manager", self.engine.ag_map_manager, destroy_old_manager=False)
+        before_reset_mgr = list(self.engine._managers.keys())
+        for manager in self.EXCLUDE_MGR[self.current_env_type]:
+            before_reset_mgr.remove(manager)
 
+        reset_mgr = list(self.engine._managers.keys())
+        for manager in self.EXCLUDE_MGR[new]:
+            reset_mgr.remove(manager)
 
-        self.engine.reset(before_reset_managers=all_manager,
-                          reset_managers=all_manager,
-                          after_reset_managers=all_manager)
-
+        self.engine.reset(before_reset_managers=before_reset_mgr,
+                          reset_managers=reset_mgr,
+                          after_reset_managers=reset_mgr)
+        self.current_env_type = new
 
 if __name__ == '__main__':
     # env = ArgoverseMultiEnv(dict(mode="train",environment_num=3, start_seed=15, use_render=False))
@@ -371,12 +377,12 @@ if __name__ == '__main__':
     for i in range(0, 74):
         print(i)
         env = ArgoversePGGeneralization(
-            dict(mode="all", source="tracking", environment_num=1, start_seed=i, use_render=False,
+            dict(mode="all", source="tracking", environment_num=1, start_seed=i, use_render=True,
                  manual_control=True)
         )
         env.reset()
         env.vehicle.expert_takeover = True
-        for i in range(1, 20):
+        for i in range(1, 200):
             o, r, d, info = env.step([0., 0.0])
         # except:
         #     print("Error!")
