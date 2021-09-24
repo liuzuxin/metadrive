@@ -162,22 +162,31 @@ class BaseEngine(EngineCore, Randomizable):
                 self._dying_objects[obj.class_name].append(obj)
         return exclude_objects.keys()
 
-    def reset(self):
+    def reset(self, before_reset_managers=None,
+              reset_managers=None,
+              after_reset_managers=None):
         """
-        For garbage collecting using, ensure to release the memory of all traffic vehicles
+        For garbage collecting using, ensure to release the memory of all objects
+        Managers can be disabled or enabled in different episode
         """
         if self.global_config["debug_physics_world"]:
             self.addTask(self.report_body_nums, "report_num")
 
         self._episode_start_time = time.time()
 
-        for manager in self._managers.values():
-            manager.before_reset()
+        before_reset_managers = before_reset_managers or list(self._managers.keys())
+        reset_managers = reset_managers or list(self._managers.keys())
+        after_reset_managers = after_reset_managers or list(self._managers.keys())
+        for name, manager in self._managers.items():
+            if name in before_reset_managers:
+                manager.before_reset()
         self._object_clean_check()
-        for manager in self._managers.values():
-            manager.reset()
-        for manager in self._managers.values():
-            manager.after_reset()
+        for name, manager in self._managers.items():
+            if name in reset_managers:
+                manager.reset()
+        for name, manager in self._managers.items():
+            if name in after_reset_managers:
+                manager.after_reset()
 
         if self.main_camera is not None:
             self.main_camera.reset()
