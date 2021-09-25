@@ -17,5 +17,5 @@ class MapParamManager(MapManager):
         super(MapParamManager, self).add_random_to_map(map_config)
         map_config[PGMap.LANE_WIDTH] = self.env_params.pop(EnvParams.LANE_WIDTH, map_config[PGMap.LANE_WIDTH])
         map_config[PGMap.LANE_NUM] = self.env_params.pop(EnvParams.LANE_NUM, map_config[PGMap.LANE_NUM])
-        map_config[PGMap.GENERATE_CONFIG] = self.env_params.pop(EnvParams.BLOCK_NUM, map_config[PGMap.GENERATE_CONFIG]) 
+        map_config[PGMap.GENERATE_CONFIG] = self.env_params.pop(EnvParams.BLOCK_NUM, map_config[PGMap.GENERATE_CONFIG])
         return map_config

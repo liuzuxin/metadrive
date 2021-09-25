@@ -288,8 +288,10 @@ def temporary_global_config(config_dict):
 
 
 class ArgoversePGGeneralizationEnv(ArgoverseGeneralizationEnv):
-    EXCLUDE_MGR = {"argoverse": ["traffic_manager", "pg_map_manager", "ag_map_manager"],
-                   "pg_map": ["real_data_manager", "ag_map_manager", "pg_map_manager"]}
+    EXCLUDE_MGR = {
+        "argoverse": ["traffic_manager", "pg_map_manager", "ag_map_manager"],
+        "pg_map": ["real_data_manager", "ag_map_manager", "pg_map_manager"]
+    }
 
     def setup_engine(self):
         super(ArgoverseGeneralizationEnv, self).setup_engine()
@@ -301,7 +303,6 @@ class ArgoversePGGeneralizationEnv(ArgoverseGeneralizationEnv):
         self.add_pg_manager()
         self.current_env_type = "argoverse"
 
-    @temporary_global_config({"start_seed": 0, "environment_num": 50})
     def add_pg_manager(self):
         self.engine.register_manager("pg_map_manager", MapManager())
 
@@ -347,7 +348,7 @@ class ArgoversePGGeneralizationEnv(ArgoverseGeneralizationEnv):
             self.config["traffic_density"] = 0.1
             before_reset_mgr.append("traffic_manager")
             if self.current_env_type == "argoverse":
-                self.engine.traffic_manager.density=0.1
+                self.engine.traffic_manager.density = 0.1
         else:
             new = "argoverse"
             self.engine.traffic_manager.density = 0.
@@ -357,9 +358,9 @@ class ArgoversePGGeneralizationEnv(ArgoverseGeneralizationEnv):
         for manager in self.EXCLUDE_MGR[new]:
             reset_mgr.remove(manager)
 
-        self.engine.reset(before_reset_managers=before_reset_mgr,
-                          reset_managers=reset_mgr,
-                          after_reset_managers=reset_mgr)
+        self.engine.reset(
+            before_reset_managers=before_reset_mgr, reset_managers=reset_mgr, after_reset_managers=reset_mgr
+        )
         self.current_env_type = new
 
 
@@ -391,9 +392,17 @@ if __name__ == '__main__':
     for i in range(0, 74):
         print(i)
         env = ArgoversePGGeneralizationEnv(
-            dict(mode="all", source="tracking", environment_num=50, start_seed=0, use_render=True, debug=True,
-                 traffic_density=0.1,
-                 manual_control=True))
+            dict(
+                mode="all",
+                source="tracking",
+                environment_num=50,
+                start_seed=0,
+                use_render=True,
+                debug=True,
+                traffic_density=0.1,
+                manual_control=True
+            )
+        )
         env.reset()
         env.vehicle.expert_takeover = True
         for i in range(1, 20000):

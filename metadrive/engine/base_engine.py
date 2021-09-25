@@ -162,9 +162,7 @@ class BaseEngine(EngineCore, Randomizable):
                 self._dying_objects[obj.class_name].append(obj)
         return exclude_objects.keys()
 
-    def reset(self, before_reset_managers=None,
-              reset_managers=None,
-              after_reset_managers=None):
+    def reset(self, before_reset_managers=None, reset_managers=None, after_reset_managers=None):
         """
         For garbage collecting using, ensure to release the memory of all objects
         Managers can be disabled or enabled in different episode
