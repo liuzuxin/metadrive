@@ -225,7 +225,11 @@ class ArgoverseGeneralizationEnv(MetaDriveEnv):
         )
 
     def _reset_real_config(self):
-        current_data_file = self.data_files[self.current_seed]
+        try:
+            current_data_file = self.data_files[self.current_seed]
+        except IndexError:
+            print("Index error: {}".format(self.current_seed))
+            current_data_file = self.data_files[0]
         current_id = current_data_file.split(".")[0]
         print("map file: ", current_data_file)
         data_path = self.file_path.joinpath(current_data_file)
@@ -387,7 +391,7 @@ if __name__ == '__main__':
     for i in range(0, 74):
         print(i)
         env = ArgoversePGGeneralizationEnv(
-            dict(mode="all", source="tracking", environment_num=1, start_seed=0, use_render=True, debug=True,
+            dict(mode="all", source="tracking", environment_num=50, start_seed=0, use_render=True, debug=True,
                  traffic_density=0.1,
                  manual_control=True))
         env.reset()
