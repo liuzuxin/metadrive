@@ -44,6 +44,26 @@ class RealDataManager(BaseManager):
             v.before_step(p.act())
         return dict()
 
+    def after_step(self):
+        """
+        Update all traffic vehicles' states,
+        """
+        v_to_remove = []
+        for v in self._traffic_vehicles:
+            v.after_step()
+            if not v.on_lane:
+                v_to_remove.append(v)
+                # lane = self.respawn_lanes[self.np_random.randint(0, len(self.respawn_lanes))]
+                # lane_idx = lane.index
+                # long = self.np_random.rand() * lane.length / 2
+                # v.update_config({"spawn_lane_index": lane_idx, "spawn_longitude": long})
+                # v.reset(self.current_map)
+                # self.engine.get_policy(v.id).reset()
+        for v in v_to_remove:
+            self.clear_objects([v.id])
+            self._traffic_vehicles.remove(v)
+        return dict()
+
     def before_reset(self) -> None:
         """
         Clear the scene and then reset the scene to empty
@@ -88,10 +108,11 @@ class RealDataManager(BaseManager):
                         "destination_node": this_info["targ_node"],
                     }
                 )
-            except (KeyError, IndexError) as e:
+            except (KeyError) as e:
                 continue
             self.engine.add_policy(generated_v.id, IDMPolicy(generated_v, self.generate_seed()))
-            generated_v.set_position(generated_v.position)
+            generated_v.set_position(this_info["init_pos"])
+            # generated_v.set_position(generated_v.position)
             self._traffic_vehicles.append(generated_v)
 
     def _filter_vehicle_configs(self, locate_info, max_to_keep=10):

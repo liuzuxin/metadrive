@@ -66,7 +66,8 @@ class AgentManager(BaseManager):
             vehicle_type[self.engine.global_config["vehicle_config"]["vehicle_model"]]
         for agent_id, v_config in config_dict.items():
             obj = self.spawn_object(v_type, vehicle_config=v_config)
-            obj.set_position(obj.position)
+            obj.set_position(v_config["agent_init_pos"])
+            # obj.set_position(obj.position)
             ret[agent_id] = obj
             policy = self._get_policy(obj)
             self.engine.add_policy(obj.id, policy)
