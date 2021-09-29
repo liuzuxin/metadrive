@@ -39,21 +39,22 @@ def format_pose_files(dataset_dir, timesteps=None):
         j += 1
 
 
+
+def _propose_destination(spawn_lane_index, map, traj_lane_num=5):
+    argo_lanes = map.blocks[0].argo_lanes
+    for lane_key in argo_lanes.keys():
+        argo_lane = argo_lanes[lane_key]
+        if (argo_lane.start_node, argo_lane.end_node, 0) == spawn_lane_index:
+            break
+
+    for _ in range(traj_lane_num - 1):
+        if argo_lane.successors is None or len(argo_lane.successors) == 0:
+            break
+        argo_lane = argo_lanes[np.random.choice(argo_lane.successors)]
+
+    return argo_lane.end_node
+
 def parse_tracking_data(dataset_dir, log_id):
-
-    # pfa = PerFrameLabelAccumulator(dataset_dir, dataset_dir, "")
-    # pfa.accumulate_per_log_data(log_id = log_id)
-    # log_egopose_dict = pfa.log_egopose_dict[log_id]
-    # log_timestamp_dict = pfa.log_timestamp_dict[log_id]
-
-    # timesteps = sorted(log_egopose_dict.keys())
-    # with open("timestep.pkl", 'wb') as f:
-    # pickle.dump(timesteps, f)
-
-    # with open("timestep.pkl", 'rb') as f:
-    # timesteps = pickle.load(f)
-    # print(timesteps)
-    # format_pose_files(os.path.join(dataset_dir, log_id), timesteps)
 
     pfa = PerFrameLabelAccumulator(dataset_dir, dataset_dir, "")
     pfa.accumulate_per_log_data(log_id=log_id)
@@ -186,12 +187,14 @@ def parse_forcasting_data(data_path):
         if v_id == ARGOVERSE_AGENT_ID:
             timestep += 1
 
-    moving_obj_threshold = 1
+    agent_init_pos = locate_info[ARGOVERSE_AGENT_ID]["init_pos"]
+    agent_targ_pos = locate_info[ARGOVERSE_AGENT_ID]["targ_pos"]
+    moving_obj_threshold = 2
     for key in list(locate_info.keys()):
         init_pos = locate_info[key]["init_pos"]
         targ_pos = locate_info[key]["targ_pos"]
         crit1 = np.linalg.norm(init_pos - targ_pos) < moving_obj_threshold
-        if crit1:
+        if crit1 and key is not ARGOVERSE_AGENT_ID:
             locate_info.pop(key)
 
     # ===============get map locate info========
@@ -205,25 +208,25 @@ def parse_forcasting_data(data_path):
         engine = initialize_engine(default_config)
         engine_init = True
 
-    agent_init_pos = locate_info[ARGOVERSE_AGENT_ID]["init_pos"]
-    agent_targ_pos = locate_info[ARGOVERSE_AGENT_ID]["targ_pos"]
     map_center = (agent_init_pos + agent_targ_pos) / 2 * np.array([1, -1])
     config = {
         "city": city,
         # "draw_map_resolution": 1024,
         "center": ArgoverseMap.metadrive_position(map_center),
-        "radius": 50
+        "radius": 200
     }
     map = ArgoverseMap(ag_map=ag_map, map_config=config)
 
+    all_argo_lanes = list(map.blocks[0].argo_lanes.values())
     def get_nearest_lane(pos):
         min_dist = 1e6
         min_lane = None
-        for lane in map.blocks[0].argo_lanes.values():
+        for lane in all_argo_lanes:
             lat, long = lane.local_coordinates(pos)
             if abs(lat) + abs(long) < min_dist:
                 min_lane = lane
                 min_dist = abs(lat) + abs(long)
+        all_argo_lanes.remove(min_lane)
         return None if not min_lane else min_lane
 
     for key in list(locate_info.keys()):
@@ -231,13 +234,9 @@ def parse_forcasting_data(data_path):
         targ_pos = locate_info[key]["targ_pos"]
         spawn_lane = get_nearest_lane(init_pos)
         spawn_lane_index = (spawn_lane.start_node, spawn_lane.end_node, 0) if spawn_lane else None
-        targ_lane = get_nearest_lane(targ_pos)
-        targ_node = targ_lane.start_node if targ_lane else None
-        if spawn_lane and targ_node and spawn_lane[0] != targ_node:
-            locate_info[key]["spawn_lane_index"] = spawn_lane_index
-            locate_info[key]["targ_node"] = targ_node
-        else:
-            locate_info.pop(key)
+        targ_node = _propose_destination(spawn_lane_index, map)
+        locate_info[key]["spawn_lane_index"] = spawn_lane_index
+        locate_info[key]["targ_node"] = targ_node
     if len(locate_info.keys()) == 0:
         return None
 
