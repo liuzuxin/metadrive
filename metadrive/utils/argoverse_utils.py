@@ -234,7 +234,10 @@ def parse_forcasting_data(data_path):
         targ_pos = locate_info[key]["targ_pos"]
         spawn_lane = get_nearest_lane(init_pos)
         spawn_lane_index = (spawn_lane.start_node, spawn_lane.end_node, 0) if spawn_lane else None
-        targ_node = _propose_destination(spawn_lane_index, map)
+        try:
+            targ_node = _propose_destination(spawn_lane_index, map)
+        except KeyError:
+            targ_node = None
         locate_info[key]["spawn_lane_index"] = spawn_lane_index
         locate_info[key]["targ_node"] = targ_node
     if len(locate_info.keys()) == 0:
@@ -246,19 +249,15 @@ def parse_forcasting_data(data_path):
 
 
 if __name__ == '__main__':
-    data = parse_forcasting_data("/home/xzh/Research/code/argoverse-api/forecasting_sample/data/3700.csv")
-    print(data)
-    exit(0)
-    # file_path = "/home/xuezhenghai/argoverse-api/argoverse-tracking/train/"
-    # output_path = "/home/xuezhenghai/argoverse-api/argoverse-tracking/train_parsed"
-    # if not os.path.isdir(output_path):
-    # os.mkdir(output_path)
-    # for log in os.listdir(file_path):
-    # print("Parsing log {}".format(log))
-    # locate_info = parse_tracking_data(file_path, log)
-    # with open(os.path.join(output_path, "{}.pkl".format(log)), 'wb') as f:
-    # pickle.dump(locate_info, f)
-    parse_tracking_data("../../../argoverse-api/argoverse-tracking/sample/", "e9a96218-365b-3ecd-a800-ed2c4c306c78")
+    file_path = "/home/xuezhenghai/argoverse-api/argoverse-forecasting/train"
+    output_path = "/home/xuezhenghai/argoverse-api/argoverse-forecasting/train_parsed"
+    if not os.path.isdir(output_path):
+        os.mkdir(output_path)
+    for log in os.listdir(file_path):
+        print("Parsing log {}".format(log))
+        locate_info = parse_forcasting_data(os.path.join(file_path, log))
+        with open(os.path.join(output_path, "{}.pkl".format(log.split(".")[0])), 'wb') as f:
+            pickle.dump(locate_info, f)
 
     # file_path = "/home/xuezhenghai/argoverse-api/argoverse-tracking/val/"
     # output_path = "/home/xuezhenghai/argoverse-api/argoverse-tracking/test_parsed"
