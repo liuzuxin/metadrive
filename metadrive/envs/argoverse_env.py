@@ -23,6 +23,7 @@ argoverse_map_radius = 300
 argoverse_spawn_lane_index = ('7903', '9713', 0)
 argoverse_destination_node = "968"
 argoverse_log_id = "c6911883-1843-3727-8eaa-41dc8cda8993"
+MAP_FILE=None
 
 logging.basicConfig(level=logging.INFO)
 
@@ -194,6 +195,8 @@ class ArgoverseGeneralizationEnv(MetaDriveEnv):
     def _reset_real_config_forecasting(self):
         current_data_file = self.data_files[self.current_seed]
         print("map file: ", current_data_file)
+        global MAP_FILE
+        MAP_FILE = current_data_file
         data_path = self.file_path.joinpath(current_data_file)
         with open(data_path, 'rb') as f:
             loaded_config = pickle.load(f)
@@ -271,36 +274,36 @@ class ArgoverseGeneralizationEnv(MetaDriveEnv):
 
 
 if __name__ == '__main__':
+    import json
     env = ArgoverseGeneralizationEnv(
         dict(
             mode="train",
             source="forecasting",
-            environment_num=300,
+            environment_num=1000,
             start_seed=0,
-            use_render=True,
+            use_render=False,
             manual_control=True,
             disable_model_compression=True
         )
     )
-    i = 10
+    i = 0
     while True:
         env.reset(force_seed=i)
-        i+=1
         env.vehicle.expert_takeover = True
         while True:
             o, r, d, info = env.step([0., 0.])
-            info = {}
-            info["lane_index"] = env.vehicle.lane_index
-            env.render(text=info)
             if d:
+                with open("forecasting_info/{}".format(MAP_FILE.split(".")[0]), 'w+') as f:
+                    json.dump(info, f)    
                 break
+        i+=1
             # print(info)
-    env = ArgoverseGeneralizationEnv(
-        dict(mode="all", source="tracking", environment_num=74, start_seed=0, use_render=False, manual_control=True)
-    )
-    for i in range(0, 74):
-        env.reset(force_seed=i)
-        env.vehicle.expert_takeover = True
-        for i in range(1, 200):
-            o, r, d, info = env.step([0., 0.0])
-        env.close()
+    # env = ArgoverseGeneralizationEnv(
+    #     dict(mode="all", source="tracking", environment_num=74, start_seed=0, use_render=False, manual_control=True)
+    # )
+    # for i in range(0, 74):
+    #     env.reset(force_seed=i)
+    #     env.vehicle.expert_takeover = True
+    #     for i in range(1, 200):
+    #         o, r, d, info = env.step([0., 0.0])
+    #     env.close()
