@@ -279,24 +279,29 @@ if __name__ == '__main__':
         dict(
             mode="train",
             source="forecasting",
-            environment_num=1000,
+            environment_num=900,
             start_seed=0,
             use_render=False,
             manual_control=True,
             disable_model_compression=True
         )
     )
-    i = 0
+    i = 600
     while True:
-        env.reset(force_seed=i)
-        env.vehicle.expert_takeover = True
-        while True:
-            o, r, d, info = env.step([0., 0.])
-            if d:
-                with open("forecasting_info/{}".format(MAP_FILE.split(".")[0]), 'w+') as f:
-                    json.dump(info, f)    
-                break
         i+=1
+        try:
+            env.reset(force_seed=i)
+            env.vehicle.expert_takeover = True
+            timestep = 0
+            while True:
+                o, r, d, info = env.step([0., 0.])
+                timestep += 1
+                if d or timestep > 300:
+                    with open("forecasting_info/{}".format(MAP_FILE.split(".")[0]), 'w+') as f:
+                        json.dump(info, f)    
+                    break
+        except:
+            continue
             # print(info)
     # env = ArgoverseGeneralizationEnv(
     #     dict(mode="all", source="tracking", environment_num=74, start_seed=0, use_render=False, manual_control=True)
