@@ -82,6 +82,9 @@ class ReplayVehicle(SVehicle):
 
     def update_dist_to_left_right(self):
         pass
+    
+    def after_step(self):
+        pass
 
 
 vehicle_type = {"s": SVehicle, "m": MVehicle, "l": LVehicle, "xl": XLVehicle, "default": DefaultVehicle}
