@@ -229,7 +229,7 @@ class ArgoverseGeneralizationEnv(MetaDriveEnv):
 
     def _reset_real_config(self):
         current_data_file = self.data_files[self.current_seed]
-        current_data_file = "fb471bd6-7c81-3d93-ad12-ac54a28beb84.pkl"
+        current_data_file = "08a8b7f0-c317-3bdb-b3dc-b7c9b6d033e2.pkl"
         current_id = current_data_file.split(".")[0]
         print("map file: ", current_data_file)
         data_path = self.file_path.joinpath(current_data_file)
@@ -286,9 +286,10 @@ if __name__ == '__main__':
             source="tracking",
             environment_num=74,
             start_seed=0,
-            use_render=False,
+            use_render=True,
             manual_control=True,
-            disable_model_compression=True
+            disable_model_compression=True,
+            debug_physics_world=True
         )
     )
     i = 0
