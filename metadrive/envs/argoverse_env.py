@@ -1,4 +1,5 @@
 import pathlib
+from metadrive.policy.expert_policy import ExpertPolicy
 import time
 import pickle
 from os import listdir
@@ -284,10 +285,11 @@ if __name__ == '__main__':
             # start_seed=0,
             mode="all",
             source="tracking",
+            agent_policy=ExpertPolicy,
             environment_num=74,
             start_seed=0,
-            use_render=True,
-            manual_control=True,
+            use_render=False,
+            manual_control=False,
             disable_model_compression=True,
             debug_physics_world=True
         )
