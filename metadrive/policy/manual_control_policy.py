@@ -53,7 +53,7 @@ class TakeoverPolicy(EnvInputPolicy):
             if config["controller"] == "joystick":
                 self.controller = SteeringWheelController()
             else:
-                raise ValueError("Takeover policy can only be activated with SteeringWheel")
+                self.controller = KeyboardController()
         self.takeover = False
 
     def act(self, agent_id):

@@ -32,6 +32,7 @@ class KeyboardController(Controller):
             self.inputs.watchWithModifiers('reverse', 's')
             self.inputs.watchWithModifiers('turnLeft', 'a')
             self.inputs.watchWithModifiers('turnRight', 'd')
+            self.inputs.watchWithModifiers('takeover', ']')
 
     def process_input(self, vehicle):
         if not self.pygame_control:
@@ -51,6 +52,7 @@ class KeyboardController(Controller):
                     throttle_brake = 1.0
                 if self.inputs.isSet('reverse'):
                     throttle_brake = -1.0
+            self.left_shift_paddle = self.right_shift_paddle = self.inputs.isSet("takeover")
         else:
             steering = 0.0
             throttle_brake = 0.0
