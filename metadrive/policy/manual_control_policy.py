@@ -71,7 +71,8 @@ class TakeoverPolicy(EnvInputPolicy):
 
 class DAggerExpertPolicy(EnvInputPolicy):
 
-    def __init__(self, obj, seed, beta_annealing_coef=0.999):
+    total_ts = 0
+    def __init__(self, obj, seed, beta_annealing_coef=0.9):
         super(DAggerExpertPolicy, self).__init__(obj, seed)
 
         self.beta = 1
@@ -79,7 +80,9 @@ class DAggerExpertPolicy(EnvInputPolicy):
         self.control_object = obj
 
     def act(self, agent_id):
-        self.beta *= self.beta_annealing_coef
+        self.total_ts += 1
+        self.beta = self.beta_annealing_coef ** (self.total_ts // 1000)
+            print(self.beta)
         if random() < self.beta:
             self.takeover = True
             return expert(self.control_object)
