@@ -2,6 +2,7 @@ from metadrive.engine.core.manual_controller import KeyboardController, Steering
 from metadrive.examples import expert
 from metadrive.policy.env_input_policy import EnvInputPolicy
 from metadrive.engine.engine_utils import get_global_config
+from random import random
 
 
 class ManualControlPolicy(EnvInputPolicy):
@@ -67,3 +68,44 @@ class TakeoverPolicy(EnvInputPolicy):
                 return expert_action
         self.takeover = False
         return agent_action
+
+class DAggerExpertPolicy(EnvInputPolicy):
+
+    def __init__(self, obj, seed, beta_annealing_coef=0.999):
+        super(DAggerExpertPolicy, self).__init__(obj, seed)
+
+        self.beta = 1
+        self.beta_annealing_coef = beta_annealing_coef
+        self.control_object = obj
+
+    def act(self, agent_id):
+        self.beta *= self.beta_annealing_coef
+        if random() < self.beta:
+            self.takeover = True
+            return expert(self.control_object)
+        self.takeover = False
+        return super(DAggerExpertPolicy, self).act(agent_id)
+
+class DAggerHumanPolicy(EnvInputPolicy):
+    
+    def __init__(self, obj, seed, beta_annealing_coef=0.999):
+
+        super(DAggerHumanPolicy, self).__init__(obj, seed)
+        config = get_global_config()
+        if config["manual_control"] and config["use_render"]:
+            if config["controller"] == "joystick":
+                self.controller = SteeringWheelController()
+            else:
+                self.controller = KeyboardController()
+        self.takeover = False
+        self.beta = 1
+        self.beta_annealing_coef = beta_annealing_coef
+        self.control_object = obj
+
+    def act(self, agent_id):
+        self.beta *= self.beta_annealing_coef
+        if random() < self.beta:
+            self.takeover = True
+            return self.controller.process_input(self.engine.current_track_vehicle)
+        self.takeover = False
+        return super(DAggerHumanPolicy, self).act(agent_id)
