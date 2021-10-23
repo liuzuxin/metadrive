@@ -3,6 +3,7 @@ from metadrive.examples import expert
 from metadrive.policy.env_input_policy import EnvInputPolicy
 from metadrive.engine.engine_utils import get_global_config
 from random import random
+# from drivingforce.expert_in_the_loop.dagger.train_dagger import get_expert_action
 
 
 class ManualControlPolicy(EnvInputPolicy):
@@ -82,7 +83,6 @@ class DAggerExpertPolicy(EnvInputPolicy):
     def act(self, agent_id):
         DAggerExpertPolicy.total_ts += 1
         self.beta = self.beta_annealing_coef ** (DAggerExpertPolicy.total_ts // 1000)
-            print(self.beta)
         if random() < self.beta:
             self.takeover = True
             return expert(self.control_object)
@@ -91,7 +91,8 @@ class DAggerExpertPolicy(EnvInputPolicy):
 
 class DAggerHumanPolicy(EnvInputPolicy):
     
-    def __init__(self, obj, seed, beta_annealing_coef=0.999):
+    total_ts = 0
+    def __init__(self, obj, seed, beta_annealing_coef=0.92):
 
         super(DAggerHumanPolicy, self).__init__(obj, seed)
         config = get_global_config()
@@ -106,7 +107,8 @@ class DAggerHumanPolicy(EnvInputPolicy):
         self.control_object = obj
 
     def act(self, agent_id):
-        self.beta *= self.beta_annealing_coef
+        DAggerHumanPolicy.total_ts += 1
+        self.beta = self.beta_annealing_coef ** (DAggerHumanPolicy.total_ts // 1000)
         if random() < self.beta:
             self.takeover = True
             return self.controller.process_input(self.engine.current_track_vehicle)
