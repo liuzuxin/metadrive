@@ -5,8 +5,7 @@ from typing import Tuple
 
 import numpy as np
 from direct.controls.InputState import InputState
-from panda3d.core import Vec3, Point3
-from panda3d.core import WindowProperties
+from panda3d.core import Vec3, Point3, WindowProperties
 
 from metadrive.constants import CollisionGroup
 from metadrive.engine.engine_utils import get_engine
@@ -32,6 +31,8 @@ class MainCamera:
     def __init__(self, engine, camera_height: float, camera_dist: float):
         self._origin_height = camera_height
         self.engine = engine
+
+        self.show_mouse = self.engine.global_config["show_mouse"]
 
         # vehicle chase camera
         self.camera = engine.cam
@@ -91,35 +92,6 @@ class MainCamera:
 
     def reset(self):
         self.direction_running_mean.clear()
-
-    def update_mouse_info(self):
-        self.move_into_window_timer -= 1 if self.move_into_window_timer > 0 else 0
-        if self.mouse_into_window:
-            self._in_recover = True
-            self.set_mouse_to_center()
-            self.move_into_window_timer = self.MOUSE_MOVE_INTO_LATENCY
-
-        if not self._in_recover and self.has_mouse and not self.mouse_into_window and self.move_into_window_timer == 0:
-            new_mouse_pos = self.engine.mouseWatcherNode.getMouseX()
-            last_rotate = self.mouse_rotate
-            self.mouse_rotate = -new_mouse_pos * self.MOUSE_SPEED_MULTIPLIER
-            diff = abs(last_rotate - self.mouse_rotate)
-            if diff == 0.:
-                self.static_timer += 1
-            else:
-                self.static_timer = 0
-            if self.static_timer > self.STATIC_MOUSE_HOLD_TIME:
-                self._in_recover = True
-                self.set_mouse_to_center()
-        else:
-            self.mouse_rotate += -self.mouse_rotate / self.MOUSE_RECOVER_TIME
-
-        if self._in_recover and abs(self.mouse_rotate) < 0.01:
-            self._in_recover = False
-            self.static_timer = 0
-            self.last_mouse_pos = 0
-
-        self._last_frame_has_mouse = self.has_mouse
 
     def _chase_task(self, vehicle, task):
         self.update_mouse_info()
@@ -247,6 +219,7 @@ class MainCamera:
                 self.camera_x, self.camera_y = current_pos[0], current_pos[1]
             self.engine.task_manager.add(self._top_down_task, self.TOP_DOWN_TASK_NAME, extraArgs=[], appendTask=True)
 
+    # Controlled by Keyboard
     def _top_down_task(self, task):
         self.top_down_camera_height = self._update_height(self.top_down_camera_height)
 
@@ -268,6 +241,41 @@ class MainCamera:
         if self.inputs.isSet("low"):
             height -= 1.0
         return height
+
+    def is_bird_view_camera(self):
+        return True if self.engine.task_manager.hasTaskNamed(self.TOP_DOWN_TASK_NAME) else False
+
+    # Controlled by mouse
+    def update_mouse_info(self):
+        if not self.use_mouse:
+            return
+        self.move_into_window_timer -= 1 if self.move_into_window_timer > 0 else 0
+        if self.mouse_into_window:
+            self._in_recover = True
+            self.set_mouse_to_center()
+            self.move_into_window_timer = self.MOUSE_MOVE_INTO_LATENCY
+
+        if not self._in_recover and self.has_mouse and not self.mouse_into_window and self.move_into_window_timer == 0:
+            new_mouse_pos = self.engine.mouseWatcherNode.getMouseX()
+            last_rotate = self.mouse_rotate
+            self.mouse_rotate = -new_mouse_pos * self.MOUSE_SPEED_MULTIPLIER
+            diff = abs(last_rotate - self.mouse_rotate)
+            if diff == 0.:
+                self.static_timer += 1
+            else:
+                self.static_timer = 0
+            if self.static_timer > self.STATIC_MOUSE_HOLD_TIME:
+                self._in_recover = True
+                self.set_mouse_to_center()
+        else:
+            self.mouse_rotate += -self.mouse_rotate / self.MOUSE_RECOVER_TIME
+
+        if self._in_recover and abs(self.mouse_rotate) < 0.01:
+            self._in_recover = False
+            self.static_timer = 0
+            self.last_mouse_pos = 0
+
+        self._last_frame_has_mouse = self.has_mouse
 
     def _wheel_down_height(self):
         if self.engine.task_manager.hasTaskNamed(self.TOP_DOWN_TASK_NAME):
@@ -296,12 +304,13 @@ class MainCamera:
             self.camera_x = ret.getHitPos()[0]
             self.camera_y = ret.getHitPos()[1]
 
-    def is_bird_view_camera(self):
-        return True if self.engine.task_manager.hasTaskNamed(self.TOP_DOWN_TASK_NAME) else False
-
     @property
     def has_mouse(self):
         return True if self.engine.mouseWatcherNode.hasMouse() else False
+
+    @property
+    def use_mouse(self):
+        return self.engine.global_config["use_mouse"]
 
     def set_mouse_to_center(self):
         mouse_id = 0
