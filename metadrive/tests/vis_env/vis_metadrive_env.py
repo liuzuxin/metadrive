@@ -36,7 +36,7 @@ if __name__ == "__main__":
             "map": "CCOX",
             "random_traffic": False,
             "random_lane_width": True,
-            "random_agent_model": True,
+            "random_agent_model": False,
             "driving_reward": 1.0,
             "vehicle_config": {
                 "enable_reverse": True,

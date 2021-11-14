@@ -153,7 +153,7 @@ class BaseBlock(BaseObject, DrivableAreaProperty):
 
         self.sidewalk_node_path.flattenStrong()
         self.sidewalk_node_path.node().collect()
-        self.sidewalk_node_path.hide(CamMask.ScreenshotCam)
+        self.sidewalk_node_path.hide(CamMask.MainCam)
 
         # only bodies reparent to this node
         self.lane_node_path.flattenStrong()

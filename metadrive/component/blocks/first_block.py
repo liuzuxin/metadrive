@@ -36,7 +36,7 @@ class FirstPGBlock(PGBlock):
         super(FirstPGBlock, self).__init__(
             0, place_holder, global_network, random_seed=0, ignore_intersection_checking=ignore_intersection_checking
         )
-        assert length > self.ENTRANCE_LENGTH, (length, self.ENTRANCE_LENGTH)
+        # assert length > self.ENTRANCE_LENGTH, (length, self.ENTRANCE_LENGTH)
         self._block_objects = []
         basic_lane = StraightLane(
             [0, lane_width * (lane_num - 1)], [self.ENTRANCE_LENGTH, lane_width * (lane_num - 1)],
@@ -59,7 +59,7 @@ class FirstPGBlock(PGBlock):
             ignore_intersection_checking=self.ignore_intersection_checking
         )
 
-        next_lane = ExtendStraightLane(basic_lane, length - self.ENTRANCE_LENGTH, [LineType.BROKEN, LineType.SIDE])
+        next_lane = ExtendStraightLane(basic_lane, length, [LineType.BROKEN, LineType.SIDE])
         other_v_spawn_road = Road(self.NODE_2, self.NODE_3)
         CreateRoadFrom(
             next_lane,

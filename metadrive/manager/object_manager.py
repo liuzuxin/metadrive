@@ -106,6 +106,7 @@ class TrafficObjectManager(BaseManager):
         :param on_left: on left or right side
         :return: None
         """
+        longitude_position -= 10
         lat_num = int(lateral_len / self.CONE_LATERAL)
         longitude_num = int(self.ACCIDENT_AREA_LEN / self.CONE_LONGITUDE)
         lat_1 = [lat * self.CONE_LATERAL for lat in range(lat_num)]
