@@ -1,7 +1,7 @@
-from metadrive.component.blocks.bottleneck import Merge, Split
-from metadrive.component.blocks.first_block import FirstPGBlock
 from metadrive.component.map.pg_map import PGMap
-from metadrive.component.road.road import Road
+from metadrive.component.pgblock.bottleneck import Merge, Split
+from metadrive.component.pgblock.first_block import FirstPGBlock
+from metadrive.component.road_network import Road
 from metadrive.envs.marl_envs.marl_inout_roundabout import LidarStateObservationMARound
 from metadrive.envs.marl_envs.multi_agent_metadrive import MultiAgentMetaDrive
 from metadrive.manager.map_manager import MapManager
@@ -11,7 +11,7 @@ from metadrive.utils.math_utils import clip
 
 MABottleneckConfig = dict(
     spawn_roads=[Road(FirstPGBlock.NODE_2, FirstPGBlock.NODE_3), -Road(Split.node(2, 0, 0), Split.node(2, 0, 1))],
-    num_agents=12,
+    num_agents=20,
     map_config=dict(exit_length=60, bottle_lane_num=4, neck_lane_num=1, neck_length=20),
     top_down_camera_initial_x=95,
     top_down_camera_initial_y=15,
@@ -105,7 +105,7 @@ class MultiAgentBottleneckEnv(MultiAgentMetaDrive):
             current_lane = vehicle.lane
         else:
             current_lane = vehicle.navigation.current_ref_lanes[0]
-            current_road = vehicle.current_road
+            current_road = vehicle.navigation.current_road
         long_last, _ = current_lane.local_coordinates(vehicle.last_position)
         long_now, lateral_now = current_lane.local_coordinates(vehicle.position)
 
